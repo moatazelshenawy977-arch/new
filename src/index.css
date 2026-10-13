@@ -1,0 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Italiana&family=Manrope:wght@400;600&family=Marck+Script&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-manrope: "Manrope", sans-serif;
+  --font-italiana: "Italiana", serif;
+  --font-marck: "Marck Script", cursive;
+}
