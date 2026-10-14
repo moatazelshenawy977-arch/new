@@ -95,7 +95,7 @@ section { margin-top: 44px; display: grid; gap: 16px; }
 .phone-screen { width: 300px; height: 650px; border-radius: 39px; overflow: hidden; background: var(--p-bg); color: var(--p-ink);
   font-family: var(--serif); position: relative; display: flex; flex-direction: column; font-size: 13px; line-height: 1.3; }
 .phone-screen.dark { background: #000; color: #fff; }
-.phone-screen button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:where(.phone-screen button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 .phone-screen [data-go] { cursor: pointer; }
 .phone-screen [data-go]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sb { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 26px 0 30px; font: 600 14px var(--sans); }
@@ -455,7 +455,7 @@ flowchart LR
         if (mode === 'loading' && i !== 0) return '<div class="slot"><div class="skel"><i style="height:80px"></i><i style="height:6px;width:40%"></i><i style="height:6px;width:70%"></i></div></div>';
         return go('picker', s[1], 'slot', '<span class="ghost">' + svg(s[0]) + '</span><span>' + s[1] + ' ›</span>');
       }).join('') + '</div></div>' +
-      '<div class="two">' + btn(svg('spark').replace('<svg', '<svg style="width:12px;height:12px;stroke:currentColor;fill:none"') + ' Style Me', 'create-loading', 'gray') + btn('Try on', 'create-trying') + '</div>' +
+      '<div class="two">' + go('create-loading', 'Style Me', 'btn gray', svg('spark').replace('<svg', '<svg style="width:12px;height:12px;stroke:currentColor;fill:none"') + ' Style Me') + btn('Try on', 'create-trying') + '</div>' +
       (mode === 'trying' ? toast('<span style="width:12px;height:12px;border-radius:50%;border:2px solid var(--p-faint);border-top-color:var(--p-2)"></span> Trying on your look') : '');
   };
   const searchDiscover = () => '<div class="row" style="padding:8px 14px">' + go('search-typing', 'Search bar', '', '<span style="display:flex;gap:8px;align-items:center;color:var(--p-2)">' + svg('search').replace('<svg', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none"') + 'Search for people, looks, and products</span>') + '</div><div class="hair"></div>' +
@@ -505,7 +505,7 @@ flowchart LR
         '<div style="margin-top:28px">' + dashes(2, 1) + '</div>' + cta('Open Camera', 'camera'), 360) },
     { id: 'camera', stage: 'Create likeness', title: 'Selfie camera', dark: true, desc: 'Live front camera. The pill rates the lighting. Tap the shutter six times.',
       html: () => '<div class="hdr" style="color:#fff">' + backTo('selfies') + '<div style="justify-self:center" class="lightpill">' + svg('sun').replace('<svg', '<svg style="width:12px;height:12px;stroke:#fff;fill:none"') + 'Good</div><div class="r" style="padding-right:8px;font-size:13px">1/6</div></div>' +
-        '<p class="ttl" style="color:rgba(255,255,255,.92);margin-top:4px">Look straight ahead</p><div style="flex:1"></div>' + go('notify', 'Shutter (after 6 shots)', 'shutter') },
+        '<p class="ttl" style="color:rgba(255,255,255,.92);margin-top:4px">Look straight ahead</p><div style="flex:1"></div>' + go('notify', 'Shutter (after 6 shots)', 'shutter', ' ') },
     { id: 'notify', stage: 'Create likeness', title: 'Turn on notifications', desc: 'The likeness takes a while to make. Doji asks to notify you when it\'s ready.',
       html: () => progress(.7, '', go('brands', 'Skip', '', 'Skip')) +
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 12px">' + '<i style="aspect-ratio:1;border-radius:50%;background:var(--p-ink)"></i>'.repeat(6) + '</div>' +
@@ -656,7 +656,7 @@ flowchart LR
         '<div style="padding:14px 12px">' + go('creator', 'Follow', 'btn', 'Follow').replace('class="btn"', 'class="btn" style="width:100%"') + '</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 6px">' + [1, 2, 3, 4, 5, 6].map(() => go('look', 'Open a look', '', ph(160))).join('') + '</div></div>' },
     { id: 'settings', stage: 'Profile and settings', title: 'Settings', desc: 'Likeness, profile, brands and shopping preference, support links, and Log Out.',
       html: () => hdr(backTo('profile'), 'Settings') + '<div class="scroll"><div style="margin:6px 12px 18px;border:1px solid var(--p-line);border-radius:14px;padding:10px;display:flex;gap:10px;align-items:center"><span style="width:38px;height:38px;border-radius:9px;background:linear-gradient(#36b3ff,#1a66f0);display:grid;place-items:center">' + svg('safari').replace('<svg', '<svg style="width:24px;height:24px;stroke:#fff;fill:none"') + '</span><div style="font-size:14px">Install the Doji Extension<div class="muted" style="font-size:11px">Try on anything directly in Safari</div></div></div>' +
-        [['Update Likeness', 'likeness', '›'], ['Edit Profile', 'profilepic', '›'], ['Your Brands', 'brands', '›'], ['Shopping Preference', 'preference', '›'], ['Account', '', '›']].map(r => (r[1] ? go(r[1], r[0], '', '') : '') + '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px"' + (r[1] ? ' data-go="' + r[1] + '" data-label="' + r[0] + '" role="button" tabindex="0"' : '') + '>' + r[0] + '<span style="color:var(--p-3)">' + r[2] + '</span></div>').join('') +
+        [['Update Likeness', 'likeness', '›'], ['Edit Profile', 'profilepic', '›'], ['Your Brands', 'brands', '›'], ['Shopping Preference', 'preference', '›'], ['Account', '', '›']].map(r => '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px"' + (r[1] ? ' data-go="' + r[1] + '" data-label="' + r[0] + '" role="button" tabindex="0"' : '') + '>' + r[0] + '<span style="color:var(--p-3)">' + r[2] + '</span></div>').join('') +
         '<div class="muted" style="padding:20px 14px 4px;font-size:11px">Support</div>' + ['Review Doji', 'Contact Us', 'Privacy Policy', 'Terms & Conditions'].map(t => '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px">' + t + '<span style="color:var(--p-3)">↗</span></div>').join('') +
         go('welcome', 'Log Out', '', '<div style="padding:24px 14px;font-size:14px;text-align:left">Log Out</div>') + '</div>' },
     { id: 'preference', stage: 'Profile and settings', title: 'Shopping preference', desc: 'Choose Menswear or Womenswear. The chosen one turns black.',
