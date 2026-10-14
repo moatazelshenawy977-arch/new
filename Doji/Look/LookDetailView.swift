@@ -40,7 +40,7 @@ struct LookDetailView: View {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
                         Button { nav.push(.creator(look.creatorID)) } label: {
-                            (Text(look.creatorID).fontWeight(.semibold) + Text(" \(look.age)").foregroundColor(Doji.secondary))
+                            (Text(look.creatorID).fontWeight(.semibold) + Text(" \(look.age)").foregroundStyle(Doji.secondary))
                         }
                         Text((look.styledBy.map { "Styled by \($0) in " } ?? "In ") + MockData.brandList(of: look))
                             .lineLimit(1)
@@ -94,10 +94,11 @@ struct LookDetailView: View {
             .presentationCornerRadius(28)
         }
         .fullScreenCover(isPresented: $showShare) {
-            ShareLookView(look: look).environment(app).toastHost()
+            ShareLookView(look: look).toastHost().environment(app)
         }
-        .fullScreenCover(item: Binding(get: { remixProducts.map(RemixSeed.init) }, set: { remixProducts = $0?.productIDs })) { seed in
-            CreateLookView(initialProductIDs: seed.productIDs).environment(app).toastHost()
+        .fullScreenCover(item: Binding(get: { remixProducts.map(RemixSeed.init) }, set: { remixProducts = $0?.productIDs }),
+                         onDismiss: app.openNewLooksIfRequested) { seed in
+            CreateLookView(initialProductIDs: seed.productIDs).toastHost().environment(app)
         }
     }
 }

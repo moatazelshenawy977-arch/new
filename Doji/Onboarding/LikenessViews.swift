@@ -191,6 +191,7 @@ struct SelfieCameraView: View {
     }
 
     private func capture() {
+        guard taken < total else { return }
         withAnimation(.easeOut(duration: 0.08)) { flash = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             withAnimation(.easeIn(duration: 0.2)) { flash = false }

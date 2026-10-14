@@ -77,7 +77,7 @@ struct LookCard: View {
                     Avatar(name: "avatar_\(look.creatorID)", size: 22)
                     (Text(look.creatorID).fontWeight(.semibold)
                      + Text(" in \(MockData.brandLine(for: look)) ")
-                     + Text(look.age).foregroundColor(Doji.secondary))
+                     + Text(look.age).foregroundStyle(Doji.secondary))
                         .font(.doji(13))
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -118,8 +118,10 @@ private struct FollowingFeed: View {
                 Spacer(minLength: 20)
                 AssetImage(name: "following_empty", kind: .group)
                     .frame(height: 260)
-                    .mask(LinearGradient(stops: [.init(color: .black, location: 0.7), .init(color: .clear, location: 1)],
-                                         startPoint: .top, endPoint: .bottom))
+                    .mask {
+                        LinearGradient(stops: [.init(color: .black, location: 0.7), .init(color: .clear, location: 1)],
+                                       startPoint: .top, endPoint: .bottom)
+                    }
                 Text("Find All Your Friends").font(.doji(26)).padding(.top, 10)
                 Text("See what they're wearing\nand try on their looks")
                     .font(.doji(17))
@@ -185,7 +187,7 @@ struct ProductCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(product.brand).font(.doji(14, .semibold))
                     Text(product.name).font(.doji(14)).lineLimit(1)
-                    (Text(product.priceText) + Text(" · \(product.age)").foregroundColor(Doji.secondary))
+                    (Text(product.priceText) + Text(" · \(product.age)").foregroundStyle(Doji.secondary))
                         .font(.doji(14))
                 }
                 Spacer(minLength: 4)

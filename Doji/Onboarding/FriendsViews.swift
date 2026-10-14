@@ -11,7 +11,7 @@ struct ContactsPrimerView: View {
         VStack(spacing: 0) {
             NavHeader()
             Text("Find all your friends").font(.doji(26))
-            (Text("Share All Contacts").foregroundColor(Doji.link)
+            (Text("Share All Contacts").foregroundStyle(Doji.link)
              + Text(" to find your friends on\nDoji and try on what they're wearing"))
                 .font(.doji(17))
                 .multilineTextAlignment(.center)

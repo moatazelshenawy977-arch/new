@@ -95,7 +95,7 @@ struct SearchHomeView: View {
         guard let r = term.range(of: query, options: [.caseInsensitive, .anchored]) else {
             return Text(term).font(.doji(17))
         }
-        return (Text(term[r]) + Text(term[r.upperBound...]).foregroundColor(Doji.secondary)).font(.doji(17))
+        return (Text(term[r]) + Text(term[r.upperBound...]).foregroundStyle(Doji.secondary)).font(.doji(17))
     }
 
     private var discover: some View {

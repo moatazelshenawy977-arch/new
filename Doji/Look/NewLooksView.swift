@@ -63,7 +63,7 @@ struct NewLooksView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                (Text(app.username).fontWeight(.semibold) + Text(" now").foregroundColor(Doji.secondary))
+                (Text(app.username).fontWeight(.semibold) + Text(" now").foregroundStyle(Doji.secondary))
                 if let styledBy = pending.styledBy {
                     (Text("Styled by ") + Text(styledBy).fontWeight(.semibold) + Text(" in \(brands.joined(separator: ", "))"))
                         .lineLimit(1)
@@ -87,7 +87,7 @@ struct NewLooksView: View {
         }
         .fullScreenCover(isPresented: $showShare) {
             if let id = pending.sourceLookID, let look = MockData.look(id) {
-                ShareLookView(look: look).environment(app).toastHost()
+                ShareLookView(look: look).toastHost().environment(app)
             }
         }
     }

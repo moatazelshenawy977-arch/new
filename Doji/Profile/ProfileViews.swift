@@ -15,7 +15,8 @@ struct ProfileView: View {
 
     private var myLooks: [Look] {
         let saved = app.savedLooks.compactMap { $0.sourceLookID }.compactMap(MockData.look)
-        return saved + MockData.looks.filter { $0.creatorID == "mira.k" }
+        var seen = Set<String>()
+        return (saved + MockData.looks.filter { $0.creatorID == "mira.k" }).filter { seen.insert($0.id).inserted }
     }
 
     var body: some View {
@@ -94,7 +95,7 @@ struct ProfileView: View {
         }
         .foregroundStyle(Doji.ink)
         .fullScreenCover(item: $editing) { target in
-            EditFlow(target: target).environment(app)
+            EditFlow(target: target).toastHost().environment(app)
         }
     }
 
@@ -496,7 +497,7 @@ struct SettingsView: View {
         .foregroundStyle(Doji.ink)
         .hidesTabBar()
         .fullScreenCover(item: $editing) { target in
-            EditFlow(target: target).environment(app)
+            EditFlow(target: target).toastHost().environment(app)
         }
     }
 

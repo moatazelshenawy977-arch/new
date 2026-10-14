@@ -33,9 +33,6 @@ struct ActivityView: View {
             }
         }
         .foregroundStyle(Doji.ink)
-        .onDisappear {
-            for i in app.activity.indices { app.activity[i].unread = false }
-        }
     }
 }
 
@@ -53,7 +50,7 @@ private struct ActivityRow: View {
             names = Text("\(item.actors[0]), \(item.actors[1])").fontWeight(.semibold)
                 + Text(" and \(item.othersCount) other")
         }
-        return names + Text(" tried on a look you styled. ") + Text(item.age).foregroundColor(Doji.secondary)
+        return names + Text(" tried on a look you styled. ") + Text(item.age).foregroundStyle(Doji.secondary)
     }
 
     var body: some View {

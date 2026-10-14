@@ -38,11 +38,14 @@ struct MainTabView: View {
             }
         }
         .ignoresSafeArea(.keyboard)
-        .fullScreenCover(isPresented: $showCreate) {
-            CreateLookView().environment(app).toastHost()
+        .onChange(of: app.selectedTab) { old, _ in
+            if old == .activity { app.markActivityRead() }
+        }
+        .fullScreenCover(isPresented: $showCreate, onDismiss: app.openNewLooksIfRequested) {
+            CreateLookView().toastHost().environment(app)
         }
         .fullScreenCover(isPresented: $app.showNewLooks) {
-            NewLooksView().environment(app).toastHost()
+            NewLooksView().toastHost().environment(app)
         }
     }
 
@@ -96,7 +99,7 @@ struct RouteView: View {
         case .searchResults(let q): SearchResultsView(query: q)
         case .settings: SettingsView()
         case .shoppingPreference: ShoppingPreferenceView()
-        case .yourBrands: SelectBrandsView(isEditing: true) { nav.path.removeLast() }
+        case .yourBrands: SelectBrandsView(isEditing: true) { nav.path.removeLast() }.hidesTabBar()
         case .contactsPrimer: ContactsPrimerView { nav.push(.inviteFriends) }
         case .inviteFriends: InviteFriendsView { nav.popToRoot() }
         }

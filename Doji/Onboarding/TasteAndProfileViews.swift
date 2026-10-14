@@ -175,7 +175,7 @@ struct FindFriendsIntroView: View {
                 }
                 .frame(maxHeight: 120, alignment: .top)
                 .clipped()
-                .mask(LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom))
+                .mask { LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom) }
             }
             .padding(.horizontal, 16)
             .padding(.top, 18)

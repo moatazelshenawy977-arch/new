@@ -58,7 +58,18 @@ final class AppState {
     var showNewLooks = false
     var toast: Toast?
 
-    var unreadActivity: Bool { activity.contains { $0.unread } }
+    /// Set by Create Look's Try on; the presenter opens New Looks once its cover has fully dismissed.
+    var openNewLooksAfterDismiss = false
+
+    func markActivityRead() {
+        for i in activity.indices { activity[i].unread = false }
+    }
+
+    func openNewLooksIfRequested() {
+        guard openNewLooksAfterDismiss else { return }
+        openNewLooksAfterDismiss = false
+        showNewLooks = true
+    }
 
     // MARK: Actions
 
@@ -115,6 +126,9 @@ final class AppState {
         selectedBrands = []; following = []; contactsConnected = false
         favoriteProductIDs = []; likedLookIDs = []; savedLooks = []
         userCollections = fresh.userCollections; pendingLooks = fresh.pendingLooks
+        preference = fresh.preference; recentlyViewedIDs = fresh.recentlyViewedIDs
+        featuredCollections = fresh.featuredCollections; activity = fresh.activity
         selectedTab = .home; tabBarHiders = 0; toast = nil
+        showNewLooks = false; openNewLooksAfterDismiss = false
     }
 }

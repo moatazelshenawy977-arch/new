@@ -94,8 +94,8 @@ struct ProductDetailView: View {
                         .padding(.bottom, 90)
                 }
             }
-            .coordinateSpace(name: "productScroll")
-            .onPreferenceChange(ScrollOffsetKey.self) { y in scrolled = y < 10 }
+            .coordinateSpace(.named("productScroll"))
+            .onPreferenceChange(ScrollOffsetKey.self) { y in Task { @MainActor in scrolled = y < 10 } }
             .scrollIndicators(.hidden)
         }
         .foregroundStyle(Doji.ink)

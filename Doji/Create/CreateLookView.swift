@@ -129,8 +129,8 @@ struct CreateLookView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
             app.pendingLooks.insert(PendingLook(sourceLookID: nil, productIDs: ids, styledBy: nil), at: 0)
             tryingOn = false
+            app.openNewLooksAfterDismiss = true
             dismiss()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { app.showNewLooks = true }
         }
     }
 }
