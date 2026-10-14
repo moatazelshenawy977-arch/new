@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doji Build Overview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working board. Journey chart on top, then a live phone with the screen index on one side and the screen's taps on the other, then every screen as a contact sheet. */
+:root {
+  --bg: #f4f3f1;
+  --surface: #ffffff;
+  --ink: #17151a;
+  --muted: #6d6872;
+  --line: #e2dfe3;
+  --accent: #c8102e;          /* Doji's unread red, used sparingly */
+  --chip: #ebe8ec;
+  /* The phone always shows Doji's own light UI, in both page themes. */
+  --p-bg: #ffffff; --p-ink: #0a080a; --p-2: #78757b; --p-3: #b3b0b5; --p-faint: #e3e1e5;
+  --p-fill: #f2f0f3; --p-line: #e8e6ea; --p-ph1: #f5f5f5; --p-ph2: #d8d4d6; --p-red: #dc121a;
+  --p-green: #3f9a4f; --p-good: #6b8c33;
+  --chart-bg: #ffffff;
+  --serif: "Newsreader", "New York", "Iowan Old Style", Georgia, serif;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141316; --surface: #1d1b20; --ink: #efedf0; --muted: #a29da7; --line: #322f36;
+    --accent: #ff4d5e; --chip: #2a272e; --chart-bg: #fbfafb; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141316; --surface: #1d1b20; --ink: #efedf0; --muted: #a29da7; --line: #322f36;
+  --accent: #ff4d5e; --chip: #2a272e; --chart-bg: #fbfafb; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { display: grid; gap: 10px; margin-bottom: 28px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 5vw, 52px); line-height: 1.05; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--serif); font-weight: 400; font-size: 28px; margin: 0; text-wrap: balance; }
+.lede { max-width: 68ch; color: var(--muted); margin: 0; }
+.note { max-width: 68ch; font-size: 13px; color: var(--muted); border-left: 2px solid var(--accent); padding-left: 12px; margin: 4px 0 0; }
+section { margin-top: 44px; display: grid; gap: 16px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+.sec-head p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+/* Journey chart */
+.chart-card { background: var(--chart-bg); border: 1px solid var(--line); border-radius: 14px; padding: 18px; overflow-x: auto; }
+.chart-card pre.mermaid { margin: 0; min-width: 760px; font-family: var(--sans); background: transparent; color: #17151a; }
+.stage-legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.stage-legend span { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--chip); color: var(--ink); }
+
+/* Prototype board */
+.board { display: grid; grid-template-columns: 230px 320px minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 960px) { .board { grid-template-columns: minmax(0,1fr); justify-items: center; } .board > * { width: 100%; max-width: 420px; } .phone-col { display: flex; justify-content: center; } }
+.index { display: grid; gap: 14px; max-height: 680px; overflow: auto; padding-right: 4px; }
+@media (max-width: 960px) { .index { max-height: none; order: 3; } }
+.index h3 { margin: 0 0 4px; font: 500 11px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.index ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.index button, .taps button, .ctrl button { font: inherit; cursor: pointer; }
+.index li button { font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 3px 10px; }
+.index li button[aria-current="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.index li button:focus-visible, .taps button:focus-visible, .ctrl button:focus-visible, .thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.info { display: grid; gap: 14px; }
+.info .stage { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.info h3 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; line-height: 1.1; }
+.info p { margin: 0; max-width: 52ch; }
+.info .src { font-size: 13px; color: var(--muted); }
+.taps { display: grid; gap: 6px; }
+.taps h4 { margin: 6px 0 2px; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.taps button { display: flex; justify-content: space-between; gap: 12px; text-align: left; width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.taps button span:last-child { color: var(--muted); white-space: nowrap; }
+.ctrl { display: flex; gap: 8px; flex-wrap: wrap; }
+.ctrl button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 14px; font-size: 13px; }
+.ctrl button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* Contact sheet */
+.sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 22px 16px; }
+.thumb { display: grid; gap: 6px; justify-items: center; background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer; font: inherit; }
+.thumb .mini { isolation: isolate; contain: paint; width: 156px; height: 334px; overflow: hidden; border-radius: 22px; border: 1px solid var(--line); background: var(--p-bg); position: relative; }
+.thumb .mini .phone-screen { transform: scale(.52); transform-origin: top left; position: absolute; top: 0; left: 0; }
+.thumb small { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.3; }
+.thumb b { font-weight: 500; font-size: 13px; color: var(--ink); display: block; }
+
+/* ===== Phone (Doji UI) ===== */
+.phone { width: 316px; height: 666px; border-radius: 46px; background: #0b0a0c; padding: 8px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.45); max-width: 100%; }
+.phone-screen { width: 300px; height: 650px; border-radius: 39px; overflow: hidden; background: var(--p-bg); color: var(--p-ink);
+  font-family: var(--serif); position: relative; display: flex; flex-direction: column; font-size: 13px; line-height: 1.3; }
+.phone-screen.dark { background: #000; color: #fff; }
+.phone-screen button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.phone-screen [data-go] { cursor: pointer; }
+.phone-screen [data-go]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sb { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 26px 0 30px; font: 600 14px var(--sans); }
+.sb .icons { display: flex; gap: 5px; align-items: center; }
+.sb .bat { width: 22px; height: 11px; border: 1.5px solid currentColor; border-radius: 3px; position: relative; opacity: .9; }
+.sb .bat::after { content: ""; position: absolute; inset: 1.5px 3px 1.5px 1.5px; background: currentColor; border-radius: 1px; }
+.home-ind { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); width: 104px; height: 4px; border-radius: 3px; background: var(--p-ink); opacity: .85; z-index: 20; }
+.dark .home-ind { background: #fff; }
+.body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+.scroll { flex: 1; overflow: hidden; min-height: 0; }
+.hdr { height: 38px; flex: none; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; padding: 0 6px; }
+.hdr .c { text-align: center; font-size: 14px; }
+.hdr .r { justify-self: end; display: flex; }
+.ico { width: 30px; height: 30px; display: inline-grid; place-items: center; }
+.ico svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.ttl { font-size: 21px; text-align: center; margin: 0; padding: 0 16px; }
+.sub { font-size: 13px; text-align: center; margin: 5px 0 0; padding: 0 16px; }
+.muted { color: var(--p-2); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 38px; padding: 0 18px; border-radius: 999px; background: var(--p-ink); color: #fff !important; font-size: 13px; white-space: nowrap; }
+.btn.gray { background: var(--p-fill); color: var(--p-ink) !important; }
+.btn.out { background: #fff; color: var(--p-ink) !important; box-shadow: inset 0 0 0 1px var(--p-faint); }
+.btn.off { background: var(--p-fill); color: var(--p-3) !important; }
+.btn.white { background: #fff; color: #000 !important; }
+.btn.sm { height: 25px; padding: 0 11px; font-size: 11px; }
+.cta-row { display: flex; justify-content: center; padding: 12px 0 22px; }
+.cta-row .btn { min-width: 154px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 22px; }
+.two .btn { width: 100%; }
+.ph { background: linear-gradient(180deg, var(--p-ph1), var(--p-ph2)); display: grid; place-items: center; overflow: hidden; position: relative; }
+.ph svg { height: 92%; width: auto; fill: #b9b4b7; opacity: .75; }
+.ph.prod { background: #fff; }
+.ph.prod svg { height: 46%; fill: none; stroke: #b6b3b8; stroke-width: 1; }
+.ph.face svg { height: 70%; }
+.ph.round { border-radius: 50%; }
+.av { width: 18px; height: 18px; border-radius: 50%; background: #d3cfd2; flex: none; display: inline-block; position: relative; overflow: hidden; }
+.av::after { content: ""; position: absolute; left: 25%; right: 25%; top: 22%; height: 32%; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 9px 0 4px rgba(255,255,255,.85); }
+.feedtabs { display: flex; justify-content: center; gap: 22px; height: 38px; align-items: center; font-size: 15px; flex: none; }
+.feedtabs span { color: var(--p-3); display: inline-flex; align-items: center; gap: 4px; }
+.feedtabs span.on { color: var(--p-ink); }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: var(--p-red); display: inline-block; }
+.lookgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 6px; padding: 4px 6px; }
+.lookcard .ph { height: 250px; }
+.cap { display: flex; gap: 6px; font-size: 10px; padding: 6px 4px 0; line-height: 1.3; }
+.cap b { font-weight: 600; }
+.prodgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 12px; padding: 6px 12px; }
+.prodcard .ph { height: 140px; }
+.prodcard .meta { display: flex; justify-content: space-between; font-size: 10.5px; margin-top: 8px; line-height: 1.35; }
+.prodcard .meta b { font-weight: 600; display: block; }
+.prodcard .ico svg { width: 12px; height: 12px; }
+.tabbar { height: 62px; flex: none; border-top: .5px solid var(--p-line); display: grid; grid-template-columns: repeat(5, 1fr); align-items: start; padding-top: 10px; background: #fff; }
+.tabbar > * { display: grid; place-items: center; }
+.tabbar svg { width: 19px; height: 19px; stroke: var(--p-ink); fill: none; stroke-width: 1.2; }
+.tabbar .on svg { stroke-width: 2; }
+.tabbar .on.fill svg { fill: var(--p-ink); }
+.tabbar .me { width: 21px; height: 21px; }
+.tabbar .on .me { box-shadow: 0 0 0 1.5px #fff, 0 0 0 2.6px var(--p-ink); }
+.newlooks { position: absolute; left: 50%; bottom: 72px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; background: var(--p-ink); color: #fff; font-size: 13px; z-index: 5; white-space: nowrap; }
+.badge { min-width: 15px; height: 15px; border-radius: 50%; background: var(--p-red); color: #fff; font: 600 9px/15px var(--sans); text-align: center; }
+.progress { height: 38px; flex: none; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; padding: 0 8px; }
+.progress .bar { height: 2px; background: var(--p-faint); border-radius: 2px; position: relative; margin: 0 4px; }
+.progress .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--p-ink); border-radius: 2px; }
+.progress .r { justify-self: end; font-size: 12px; }
+.ldot { width: 16px; height: 16px; border-radius: 50%; background: var(--p-ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 12px; }
+.chip { height: 29px; padding: 0 10px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--p-faint); display: inline-flex; align-items: center; gap: 3px; font-size: 13px; background: #fff; white-space: nowrap; }
+.chip.on { background: var(--p-ink); color: #fff; box-shadow: none; }
+.chip.sm { height: 25px; font-size: 11px; padding: 0 9px; }
+.search { margin: 0 12px; height: 34px; border-radius: 999px; background: var(--p-fill); display: flex; align-items: center; gap: 7px; padding: 0 12px; color: var(--p-2); font-size: 12px; }
+.search svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.4; }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.28); z-index: 8; }
+.bsheet { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 22px 22px 0 0; z-index: 9; display: flex; flex-direction: column; }
+.bsheet .grab { width: 34px; height: 4px; border-radius: 3px; background: var(--p-faint); margin: 7px auto 0; }
+.bsheet .st { text-align: center; font-size: 15px; padding: 14px 0 10px; }
+.toast { position: absolute; top: 46px; left: 50%; transform: translateX(-50%); z-index: 12; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 6px 0 12px; border-radius: 999px; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.14); font-size: 12px; white-space: nowrap; }
+.toast.solo { padding-right: 14px; }
+.toast .mini-ph { width: 18px; height: 22px; }
+.rail { position: absolute; right: 8px; top: 46%; display: grid; gap: 10px; justify-items: center; z-index: 3; }
+.rail .ico svg { width: 18px; height: 18px; }
+.rail .av { width: 30px; height: 30px; }
+.row { display: flex; align-items: center; gap: 10px; padding: 7px 12px; }
+.row .grow { flex: 1; min-width: 0; }
+.row .name { font-size: 13px; font-weight: 600; }
+.row .meta { font-size: 11px; color: var(--p-2); }
+.hair { height: .5px; background: var(--p-line); }
+.slotgrid { display: grid; grid-template-columns: 1fr 1fr; }
+.slot { height: 150px; border-right: .5px solid var(--p-line); border-bottom: .5px solid var(--p-line); display: grid; align-content: center; justify-items: center; gap: 8px; font-size: 11px; position: relative; padding: 0 10px; }
+.slot .ghost svg { width: 54px; height: 54px; stroke: var(--p-faint); fill: none; stroke-width: 1; }
+.slot.filled { justify-items: start; }
+.slot.filled .ph { width: 100%; height: 86px; }
+.slot .tl, .slot .tr { position: absolute; top: 8px; color: var(--p-3); font-size: 10px; }
+.slot .tl { left: 9px; } .slot .tr { right: 9px; }
+.skel { display: grid; gap: 6px; width: 100%; }
+.skel i { display: block; background: var(--p-fill); border-radius: 6px; }
+.sect { display: flex; align-items: center; gap: 4px; font-size: 15px; padding: 14px 14px 8px; }
+.hscroll { display: flex; gap: 10px; padding: 0 14px; overflow: hidden; }
+.keypad { background: #d2d5db; padding: 6px 5px 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; flex: none; font-family: var(--sans); }
+.keypad span { background: #fff; border-radius: 5px; height: 34px; display: grid; place-items: center; font-size: 17px; box-shadow: 0 1px 0 rgba(0,0,0,.25); }
+.keypad span.k0 { grid-column: 2; }
+.keyboard { background: #d2d5db; height: 180px; flex: none; display: grid; place-items: center; color: #8a8d93; font: 12px var(--sans); }
+.lightpill { width: 76px; height: 26px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; }
+.lightpill::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 60%; background: var(--p-good); z-index: -1; }
+.lightpill { isolation: isolate; }
+.shutter { width: 58px; height: 58px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.85); display: grid; place-items: center; margin: 0 auto 34px; }
+.shutter::after { content: ""; width: 46px; height: 46px; border-radius: 50%; background: #737373; }
+.tipcard { flex: 1; height: 120px; border-radius: 12px; border: 2.5px solid; position: relative; }
+.tipcard .ph { position: absolute; inset: 0; border-radius: 9px; }
+.tipcard b { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; color: #fff; display: grid; place-items: center; font: 600 11px var(--sans); }
+.dashes { display: flex; gap: 5px; justify-content: center; }
+.dashes i { width: 12px; height: 2px; background: var(--p-faint); border-radius: 2px; }
+.dashes i.on { background: var(--p-ink); }
+.vis { display: grid; grid-template-columns: 1fr 1fr; text-align: center; font-size: 13px; }
+.vis span { padding: 9px 0; border-bottom: 1.5px solid transparent; color: var(--p-3); }
+.vis span.on { color: var(--p-ink); border-color: var(--p-ink); }
+.colltool { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--p-ink); color: #fff; border-radius: 999px; display: flex; gap: 26px; padding: 9px 26px; font-size: 10px; z-index: 4; }
+.colltool div { display: grid; justify-items: center; gap: 2px; }
+.colltool svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 1.3; }
+.wordmark { font-size: 19px; }
+@media (prefers-reduced-motion: no-preference) { .phone-screen .body { animation: fade .22s ease-out; } }
+@keyframes fade { from { opacity: .4; } to { opacity: 1; } }
+</style>
+<style>
+.done-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.done-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 6px; align-content: start; }
+.done-card h3 { margin: 0; font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.done-card p, .done-card ul { margin: 0; font-size: 14px; }
+.done-card ul { padding-left: 18px; }
+.done-card .big { font-family: var(--serif); font-size: 34px; line-height: 1; }
+.status { display: inline-block; font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--chip); }
+.status.ok { color: #2f7a3b; } .status.warn { color: #a3610b; }
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+.img-grid figure { margin: 0; display: grid; gap: 6px; }
+.img-grid img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); }
+.img-grid figcaption { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.img-grid figcaption b { color: var(--ink); font-weight: 500; display: block; font-size: 13px; }
+code { font-family: var(--mono); font-size: 12.5px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Doji iOS recreation · build overview</div>
+    <h1>What I built for you</h1>
+    <p class="lede">The full path a shopper takes through the app, from first launch to trying on and saving a look. Tap the buttons inside the phone to walk through it, or pick any screen from the index.</p>
+    <p class="note">These previews redraw each screen's layout from the SwiftUI code in the repo. They are not screenshots of the compiled app. Gray shapes are the same placeholder slots the app shows until real photos are added.</p>
+  </header>
+
+
+  <section aria-labelledby="done-h">
+    <div class="sec-head">
+      <h2 id="done-h">What has been done</h2>
+      <p>Everything below is committed on branch <code>claude/awesome-volta-o8ofem</code> (pull request #2).</p>
+    </div>
+    <div class="done-grid">
+      <div class="done-card"><h3>Reference</h3><div class="big">40+</div><p>Doji flows read through the Mobbin connector. Built the newer design (For You / Following / Shop).</p></div>
+      <div class="done-card"><h3>iPhone app</h3><div class="big">~50</div><p>SwiftUI screens in 20+ files, connected into one working flow, with an Xcode project ready to open on a Mac.</p></div>
+      <div class="done-card"><h3>Images</h3><div class="big">6</div><p>Original images generated with Higgsfield, one per image type. About 80 slots still use gray placeholders.</p></div>
+      <div class="done-card"><h3>Review</h3><span class="status ok">6 bugs fixed</span><p>An independent code review found no compile errors and 6 runtime issues, all fixed.</p></div>
+      <div class="done-card"><h3>Still to do</h3><span class="status warn">Needs you or a backend</span>
+        <ul><li>Build and run it in Xcode on a Mac (not compiled yet)</li><li>Add images to <code>Assets.xcassets</code></li><li>Real SMS login, AI try-on and saved data need a server</li></ul></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="img-h">
+    <div class="sec-head">
+      <h2 id="img-h">Generated images</h2>
+      <p>Original images made with Higgsfield (not copied from Mobbin). The caption shows the asset name to use in Xcode. They load from Higgsfield, so you need to be online.</p>
+    </div>
+    <div class="img-grid"><figure><a href="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132612_ce742862-2768-4c39-b283-6a7b7bd39d93.png" target="_blank" rel="noopener"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132612_ce742862-2768-4c39-b283-6a7b7bd39d93.png" alt="Look photo" loading="lazy"></a><figcaption><b>Look photo</b>look_l01 · feeds, look detail</figcaption></figure><figure><a href="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132533_f669909d-2d0c-4d74-bb58-e700b8493dfb.png" target="_blank" rel="noopener"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132533_f669909d-2d0c-4d74-bb58-e700b8493dfb.png" alt="Product: blazer" loading="lazy"></a><figcaption><b>Product: blazer</b>product_p01 · Shop, product page</figcaption></figure><figure><a href="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132902_8da822f7-df0f-4ed3-9fd3-e2be46713201.png" target="_blank" rel="noopener"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132902_8da822f7-df0f-4ed3-9fd3-e2be46713201.png" alt="Product: boots" loading="lazy"></a><figcaption><b>Product: boots</b>product_p02 · Shop, pickers</figcaption></figure><figure><a href="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132701_c3485226-40ee-4f2c-ba21-1bbed2e57117.png" target="_blank" rel="noopener"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132701_c3485226-40ee-4f2c-ba21-1bbed2e57117.png" alt="Avatar" loading="lazy"></a><figcaption><b>Avatar</b>avatar_me · profile pictures</figcaption></figure><figure><a href="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132738_94081347-ade0-4480-84be-9e82aca548a1.png" target="_blank" rel="noopener"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132738_94081347-ade0-4480-84be-9e82aca548a1.png" alt="Selfie example" loading="lazy"></a><figcaption><b>Selfie example</b>selfie_example_1 · Take 6 selfies</figcaption></figure><figure><a href="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132820_b25d89d5-de09-4fe1-9302-70c8a30d6d52.png" target="_blank" rel="noopener"><img src="https://d8j0ntlcm91z4.cloudfront.net/user_3K3skkujk3FUbPHkXPE6qoeEASw/hf_20261014_132820_b25d89d5-de09-4fe1-9302-70c8a30d6d52.png" alt="Friends group" loading="lazy"></a><figcaption><b>Friends group</b>friends_1 · Find all your friends</figcaption></figure></div>
+  </section>
+
+  <section aria-labelledby="chart-h">
+    <div class="sec-head">
+      <h2 id="chart-h">Journey chart</h2>
+      <p>A first-time user goes left to right through sign-up and likeness setup once. After that, they keep coming back to the core loop: discover, try on, save, share.</p>
+    </div>
+    <div class="chart-card">
+<pre class="mermaid">
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Instrument Sans, system-ui, sans-serif", "fontSize": "14px", "primaryColor": "#ffffff", "primaryBorderColor": "#17151a", "primaryTextColor": "#17151a", "lineColor": "#6d6872", "clusterBkg": "#f4f3f1", "clusterBorder": "#d6d2d7", "tertiaryColor": "#f4f3f1"}}}%%
+flowchart LR
+  subgraph A["1 · Sign up"]
+    direction TB
+    W["Welcome carousel"] --> P["Phone number"] --> C["Enter the code"] --> E["Email"]
+  end
+  subgraph B["2 · Create likeness"]
+    direction TB
+    L["Create your likeness"] --> S["Take 6 selfies"] --> T["Tips sheet"] --> CAM["Selfie camera x6"] --> N["Turn on notifications"]
+  end
+  subgraph D["3 · Taste and profile"]
+    direction TB
+    BR["Select 3+ brands"] --> U["Create a username"] --> PP["Set profile pic"] --> FF{"Find friends?"}
+  end
+  subgraph F["4 · Friends (optional)"]
+    direction TB
+    CP["Contacts primer"] --> IF["Invite your friends"] --> IW["Invite with Messages / WhatsApp"]
+  end
+  subgraph M["5 · Core loop (main app)"]
+    direction TB
+    FY["For You / Following / Shop"] --> LD["Look detail"]
+    FY --> PD["Product detail"]
+    SE["Search and filters"] --> LD
+    SE --> PD
+    SE --> FC["Featured collection"]
+    LD -- "Try On" --> NL["New Looks review"]
+    PD -- "Try On" --> NL
+    LD -- "Remix" --> CL["Create Look"]
+    CL -- "Try on" --> NL
+    NL -- "Save" --> SV["Save to Profile and collections"]
+    SV --> PR["Profile"]
+    LD -- "Share" --> SH["Share Look"]
+    PR --> ST["Settings"]
+  end
+  E --> L
+  N --> BR
+  FF -- "Find Your Friends" --> CP
+  FF -- "Continue Without Friends" --> FY
+  IF -- "Done" --> FY
+  ST -- "Log Out" --> W
+  classDef key fill:#17151a,stroke:#17151a,color:#ffffff;
+  class NL,FY key;
+</pre>
+    </div>
+    <div class="stage-legend" aria-label="Stages">
+      <span>Sign up: 4 screens</span><span>Likeness: 6</span><span>Taste and profile: 5</span><span>Friends: 3</span><span>Core loop: 25+</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="walk-h">
+    <div class="sec-head">
+      <h2 id="walk-h">Walk the app</h2>
+      <p>Everything you can tap inside the phone moves you to the next screen, the same way the app does.</p>
+    </div>
+    <div class="board">
+      <nav class="index" id="index" aria-label="Screen index"></nav>
+      <div class="phone-col"><div class="phone"><div class="phone-screen" id="phone"></div></div></div>
+      <div class="info" aria-live="polite">
+        <div class="stage" id="i-stage"></div>
+        <h3 id="i-title"></h3>
+        <p id="i-desc"></p>
+        <div class="taps" id="i-taps"></div>
+        <div class="ctrl">
+          <button type="button" id="btn-back">Back</button>
+          <button type="button" class="primary" id="btn-restart">Start from first launch</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="all-h">
+    <div class="sec-head">
+      <h2 id="all-h">All screens</h2>
+      <p>Every screen in the build, in journey order. Select one to open it in the phone above.</p>
+    </div>
+    <div class="sheet-grid" id="sheet"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  // ---------- icons ----------
+  const I = {
+    back: '<path d="M14 5l-7 7 7 7"/>',
+    down: '<path d="M5 9l7 7 7-7"/>',
+    right: '<path d="M9 5l7 7-7 7"/>',
+    q: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".4" fill="currentColor"/>',
+    heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    share: '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11v9h12v-9"/>',
+    plus: '<path d="M12 4v16M4 12h16"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+    bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+    house: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    remix: '<path d="M4 9h13l-3-3M20 15H7l3 3"/>',
+    more: '<circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/>',
+    sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/>',
+    grid: '<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/>',
+    pencil: '<path d="M4 20l4-1 11-11-3-3L5 16z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',
+    shirt: '<path d="M8 4l-5 3 2 4 3-1v10h8V10l3 1 2-4-5-3c-.5 1.5-2 2.5-4 2.5S8.5 5.5 8 4z"/>',
+    shoe: '<path d="M3 16v-5l5 1 4 3 8 1v3H3z"/>',
+    bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+    glasses: '<circle cx="7" cy="14" r="3.5"/><circle cx="17" cy="14" r="3.5"/><path d="M10.5 14h3M3.5 14L5 8M20.5 14L19 8"/>',
+    pants: '<path d="M7 3h10l1 18h-4l-2-11-2 11H6z"/>',
+    safari: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+    msg: '<path d="M4 5h16v11H9l-5 4z"/>'
+  };
+  const svg = (n) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + I[n] + '</svg>';
+  const ico = (n, go, label, extra) => '<span class="ico" ' + (go ? 'data-go="' + go + '" role="button" tabindex="0" ' : '') + 'aria-label="' + (label || n) + '"' + (extra || '') + '>' + svg(n) + '</span>';
+  const FIG = '<svg viewBox="0 0 40 120" aria-hidden="true"><circle cx="20" cy="11" r="7"/><path d="M12 21h16l3 34-4 1-2-20v80h-5l-0-45-0 45h-5V36l-2 20-4-1z"/></svg>';
+  const FACE = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="8"/><path d="M5 40c2-10 8-14 15-14s13 4 15 14z"/></svg>';
+  const ph = (h, extra, w) => '<div class="ph ' + (extra || '') + '" style="height:' + h + 'px' + (w ? ';width:' + w + 'px' : '') + '">' + FIG + '</div>';
+  const face = (s, extra) => '<div class="ph face round ' + (extra || '') + '" style="width:' + s + 'px;height:' + s + 'px">' + FACE + '</div>';
+  const prodPh = (h, kind) => '<div class="ph prod" style="height:' + h + 'px"><svg viewBox="0 0 24 24" aria-hidden="true">' + I[kind || 'shirt'] + '</svg></div>';
+  const go = (target, label, cls, inner) => '<button type="button" class="' + (cls || '') + '" data-go="' + target + '"' + (label ? ' data-label="' + label + '"' : '') + '>' + (inner || label) + '</button>';
+  const btn = (label, target, kind) => go(target, label, 'btn ' + (kind || ''));
+  const cta = (label, target, kind) => '<div class="cta-row">' + btn(label, target, kind) + '</div>';
+  const hdr = (l, c, r) => '<div class="hdr"><div>' + (l || '') + '</div><div class="c">' + (c || '') + '</div><div class="r">' + (r || '') + '</div></div>';
+  const backTo = (t) => ico('back', t, 'Back');
+  const progress = (p, back, right) => '<div class="progress"><div>' + (back ? backTo(back) : '') + '</div><div class="bar"><i style="width:' + (p * 100) + '%"></i></div><div class="r">' + (right || '') + '</div></div>';
+  const dashes = (n, on) => '<div class="dashes">' + Array.from({ length: n }, (_, i) => '<i class="' + (i === on ? 'on' : '') + '"></i>').join('') + '</div>';
+  const keypad = () => '<div class="keypad">' + [1,2,3,4,5,6,7,8,9].map(n => '<span>' + n + '</span>').join('') + '<span class="k0">0</span></div>';
+  const keyboard = () => '<div class="keyboard">Keyboard</div>';
+  const tabbar = (on) => '<div class="tabbar">' +
+    go('foryou', 'Home tab', on === 'home' ? 'on fill' : '', svg('house')) +
+    go('search', 'Search tab', on === 'search' ? 'on' : '', svg('search')) +
+    go('create', 'Create Look (+)', '', svg('plus')) +
+    go('activity', 'Activity tab', on === 'activity' ? 'on fill' : '', svg('bell')) +
+    go('profile', 'Profile tab', on === 'profile' ? 'on' : '', '<span class="av me"></span>') + '</div>';
+  const newLooks = (n) => go('newlooks', 'New Looks pill', 'newlooks', 'New Looks <span class="badge">' + (n || 9) + '</span>');
+  const feedtabs = (on) => '<div class="feedtabs">' +
+    go('foryou', 'For You', on === 'foryou' ? 'on' : '', '<span class="' + (on === 'foryou' ? 'on' : '') + '">For You</span>') +
+    go('following', 'Following', '', '<span class="' + (on === 'following' ? 'on' : '') + '">Following' + (on === 'foryou' ? ' <i class="dot"></i>' : '') + '</span>') +
+    go('shop', 'Shop', '', '<span class="' + (on === 'shop' ? 'on' : '') + '">Shop' + (on !== 'shop' ? ' <i class="dot"></i>' : '') + '</span>') + '</div>';
+  const lookCard = (user, brands, age, target) => go(target || 'look', 'Open a look', 'lookcard', ph(250) + '<div class="cap"><span class="av"></span><span><b>' + user + '</b> in ' + brands + ' <span class="muted">' + age + '</span></span></div>');
+  const prodCard = (brand, name, price, age, kind, heartTo, fav) => '<div class="prodcard">' + go('product', 'Open a product', '', prodPh(140, kind)) +
+    '<div class="meta"><div><b>' + brand + '</b>' + name + '<br>' + price + ' <span class="muted">· ' + age + '</span></div>' +
+    (heartTo ? ico('heart', heartTo, 'Save to Favorites', fav ? ' style="color:var(--p-ink)"' : '') : '') + '</div></div>';
+  const toast = (text, action, img) => '<div class="toast ' + (action ? '' : 'solo') + '">' + (img ? '<div class="ph mini-ph">' + FIG + '</div>' : '') + text + (action || '') + '</div>';
+  const sheetOver = (bg, content, height) => bg + '<div class="dim"></div><div class="bsheet" style="height:' + height + 'px"><div class="grab"></div>' + content + '</div>';
+  const row = (avatar, name, meta, right) => '<div class="row">' + avatar + '<div class="grow"><div class="name">' + name + '</div>' + (meta ? '<div class="meta">' + meta + '</div>' : '') + '</div>' + (right || '') + '</div>';
+
+  // ---------- screen bodies ----------
+  const forYouBody = (extra) => feedtabs('foryou') + '<div class="scroll"><div class="lookgrid">' +
+    lookCard('mira.k', 'KNWLS and Paris Texas', '1d') + lookCard('jules', 'Gucci and 16Arlington', '2d') +
+    lookCard('noor.wears', 'Alaïa, Nude and more', '6w') + lookCard('theo.r', 'Chloé, Blumarine and more', '6w') +
+    '</div></div>' + newLooks() + (extra || '') + tabbar('home');
+  const shopBody = (extra, fav) => feedtabs('shop') + '<div class="scroll"><div class="prodgrid">' +
+    prodCard('Chloé', 'Check Double-Breasted Jac…', '$3,290', '19h', 'shirt', 'shop-saved', fav) +
+    prodCard('Chloé', 'Azelan Embroidered Boots', '$2,061', '19h', 'shoe', 'shop-saved') +
+    prodCard('Chloé', 'Maxime Shearling-Trim We…', '$1,283', '19h', 'shoe', 'shop-saved') +
+    prodCard('Chloé', 'Coddington Biker Boots', '$1,150', '19h', 'shoe', 'shop-saved') +
+    '</div></div>' + newLooks() + (extra || '') + tabbar('home');
+  const lookBody = (extra) => hdr(backTo('foryou'), '', '<span class="wordmark" style="padding-right:8px">Doji</span>') +
+    '<div class="scroll" style="position:relative">' + go('inthelook', 'Tap the look (In the Look)', '', ph(470, '', 300)) +
+    '<div class="rail">' + go('creator', 'Creator profile', '', '<span class="av"></span>') + ico('heart', 'look-liked', 'Like') + ico('remix', 'create-remix', 'Remix') + ico('share', 'sharelook', 'Share') + ico('more', '', 'More') + '</div></div>' +
+    '<div style="display:flex;align-items:flex-end;gap:10px;padding:6px 14px 26px"><div style="flex:1;font-size:12px;line-height:1.45">' +
+    go('creator', 'Creator name', '', '<b>mira.k</b> <span class="muted">1w</span>') + '<div>In KNWLS, Paris Texas</div>' +
+    go('triedby', 'Tried on by', '', '<span style="display:inline-flex;gap:5px;align-items:center"><span class="av" style="width:14px;height:14px"></span>Tried on by <b>jules</b> +7</span>') +
+    '</div>' + btn('Try On', 'look-ready') + '</div>' + (extra || '');
+  const createBody = (mode) => {
+    const slots = [['shirt', 'Select a Top'], ['pants', 'Select Bottoms'], ['shoe', 'Select Shoes'], ['shirt', 'Add Another Top'], ['glasses', 'Add Accessories'], ['bag', 'Add a Bag']];
+    const filled = { 0: ['Gucci', 'fine silk faille jacket', 'shirt', true] };
+    if (mode === 'styled') Object.assign(filled, { 1: ['16Arlington', 'ivlia tailored trousers', 'pants'], 2: ['Le Silla', 'vivienne slingback pumps', 'shoe'], 4: ['Khaite', 'gold oliver peoples edition…', 'glasses'], 5: ['Khaite', 'leather shoulder bag', 'bag'] });
+    return hdr(ico('down', 'foryou', 'Close'), '<span style="font-size:15px">Create Look</span>', ico('search', 'picker', 'Search products')) + '<div class="hair"></div>' +
+      '<div class="scroll"><div class="slotgrid">' + slots.map((s, i) => {
+        const f = (mode === 'filled' || mode === 'styled' || mode === 'trying') ? filled[i] : null;
+        if (f) return '<div class="slot filled"><span class="tl">' + (f[3] ? '🔒' : '🔓') + '</span><span class="tr">✕</span>' + prodPh(86, f[2]) + '<div>' + f[0] + '<br>' + f[1] + '</div></div>';
+        if (mode === 'loading' && i !== 0) return '<div class="slot"><div class="skel"><i style="height:80px"></i><i style="height:6px;width:40%"></i><i style="height:6px;width:70%"></i></div></div>';
+        return go('picker', s[1], 'slot', '<span class="ghost">' + svg(s[0]) + '</span><span>' + s[1] + ' ›</span>');
+      }).join('') + '</div></div>' +
+      '<div class="two">' + btn(svg('spark').replace('<svg', '<svg style="width:12px;height:12px;stroke:currentColor;fill:none"') + ' Style Me', 'create-loading', 'gray') + btn('Try on', 'create-trying') + '</div>' +
+      (mode === 'trying' ? toast('<span style="width:12px;height:12px;border-radius:50%;border:2px solid var(--p-faint);border-top-color:var(--p-2)"></span> Trying on your look') : '');
+  };
+  const searchDiscover = () => '<div class="row" style="padding:8px 14px">' + go('search-typing', 'Search bar', '', '<span style="display:flex;gap:8px;align-items:center;color:var(--p-2)">' + svg('search').replace('<svg', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none"') + 'Search for people, looks, and products</span>') + '</div><div class="hair"></div>' +
+    '<div class="scroll"><div class="sect">Recently Viewed</div><div class="hscroll">' +
+    ['Chloé|$3,290|shirt', 'Alaïa|$540|glasses', 'Almaz|$1,899|pants', 'Alaïa|$615|shirt'].map(s => { const p = s.split('|'); return go('product', 'Recently viewed product', '', '<div style="width:68px;font-size:11px;text-align:left">' + prodPh(72, p[2]) + '<div style="margin-top:6px">' + p[0] + '<br>' + p[1] + '</div></div>'); }).join('') +
+    '</div><div class="sect" style="padding-top:20px">Featured Collections</div><div class="hscroll">' +
+    go('collection', 'Featured collection', '', '<div style="width:150px;text-align:left"><div class="ph" style="height:140px;border-radius:10px;border:1px solid var(--p-line)">' + FIG + FIG + FIG + '</div><div style="font-size:13px;margin-top:6px">Made in Korea</div><div class="muted" style="font-size:10px">Doji · 1.7k Try Ons</div></div>') +
+    go('collection', 'Featured collection', '', '<div style="width:150px;text-align:left"><div class="ph" style="height:140px;border-radius:10px;border:1px solid var(--p-line)">' + FIG + FIG + '</div><div style="font-size:13px;margin-top:6px">Alt Wedding Guest</div><div class="muted" style="font-size:10px">Doji · 2.1k Try Ons</div></div>') +
+    '</div><div class="sect" style="padding-top:20px;padding-bottom:0">Top Creators</div><div class="muted" style="padding:0 14px 6px;font-size:11px">Last 7 Days</div>' +
+    ['mira.k|styling for fun', 'jules|', 'noor.wears|fashion photographer'].map((s, i) => { const p = s.split('|'); return row('<span style="width:10px;font-size:12px">' + (i + 1) + '</span><span class="av" style="width:34px;height:34px"></span>', go('creator', 'Top creator', '', p[0]), p[1], '<span class="btn sm" style="width:22px;padding:0;border-radius:50%">+</span>'); }).join('') +
+    '</div>' + newLooks(8) + tabbar('search');
+
+  // ---------- screens ----------
+  const SCREENS = [
+    // Sign up
+    { id: 'welcome', stage: 'Sign up', title: 'Welcome carousel', desc: 'First launch. Swipe through what Doji does, then tap Next.',
+      html: () => '<div style="text-align:center;padding-top:10px" class="wordmark">Doji</div><div style="flex:1;padding:14px 46px 10px;display:flex">' + ph(390, '', 208) + '</div>' + dashes(2, 0) +
+        '<p class="ttl" style="margin-top:12px">Try on clothes with your personalized likeness</p>' + cta('Next', 'welcome2') },
+    { id: 'welcome2', stage: 'Sign up', title: 'Welcome, last page', desc: 'The last carousel page leads into account creation. (Doji has a middle page that Mobbin didn\'t capture.)',
+      html: () => '<div style="text-align:center;padding-top:10px" class="wordmark">Doji</div><div style="flex:1;padding:14px 22px 10px;display:flex;gap:8px">' + ph(390) + ph(390) + '</div>' + dashes(2, 1) +
+        '<p class="ttl" style="margin-top:12px">Save your favorite looks to showcase your style</p>' + cta('Get Started', 'phone') },
+    { id: 'phone', stage: 'Sign up', title: 'Phone number', desc: 'Enter a US number. Request Code turns on once 10 digits are typed.',
+      html: () => hdr(backTo('welcome2'), '', ico('q', '', 'Help')) + '<div style="flex:1;padding-top:70px;text-align:center"><p class="ttl">What\'s your phone number?</p><div style="font-size:24px;margin-top:12px">+1<span class="muted" style="font-size:10px"> ⌄</span> 650 213 7390</div></div>' +
+        cta('Request Code', 'code') + '<p class="muted" style="font-size:10px;text-align:center;margin:-12px 0 12px">By creating an account, you agree to our<br><u>Terms of Service</u> and <u>Privacy Policy</u>.</p>' + keypad() },
+    { id: 'code', stage: 'Sign up', title: 'Enter the code', desc: 'Type the 6-digit code from the text message. A resend link appears after 30 seconds.',
+      html: () => hdr(backTo('phone'), '', ico('q', '', 'Help')) + '<div style="flex:1;padding-top:70px;text-align:center"><p class="ttl">Enter the code</p><div style="font-size:26px;letter-spacing:4px;color:var(--p-3);margin-top:12px">000000</div><p class="muted" style="font-size:12px;margin-top:14px">Resend to +1 650 213 7390 in 30s</p></div>' +
+        cta('Verify Code', 'email') + keypad() },
+    { id: 'email', stage: 'Sign up', title: 'Email', desc: 'Add an email address. Next turns on when it looks valid.',
+      html: () => hdr(backTo('code'), '', ico('q', '', 'Help')) + '<div style="flex:1;padding-top:70px;text-align:center"><p class="ttl">What\'s your email?</p><div style="font-size:23px;color:var(--p-3);margin-top:12px">hello@doji.com</div></div>' +
+        cta('Next', 'likeness') + keyboard() },
+    // Likeness
+    { id: 'likeness', stage: 'Create likeness', title: 'Create your likeness', desc: 'Explains why Doji needs photos: your likeness is how you try clothes on.',
+      html: () => progress(.2, 'email', ico('q', '', 'Help')) + '<p class="ttl">Create your likeness</p><p class="sub">Your likeness makes it easy to explore new styles and find clothes you\'ll love</p><div style="flex:1;padding:14px 60px;display:flex">' + ph(330, '', 180) + '</div>' + cta('Next', 'selfies') },
+    { id: 'selfies', stage: 'Create likeness', title: 'Take 6 selfies', desc: 'Shows the six face angles needed. Next opens the tips sheet.',
+      html: () => progress(.4, 'likeness', ico('q', '', 'Help')) + '<p class="ttl">Take 6 selfies</p><p class="sub">Don\'t worry if they\'re not perfect, we\'ll make you look good</p>' +
+        '<div style="flex:1;position:relative;margin:10px 0"><div style="position:absolute;left:30%;right:30%;top:0;bottom:0">' + ph(330) + '</div>' +
+        [[8, 20], [8, 130], [8, 240], [230, 34], [230, 144], [230, 254]].map(p => '<div style="position:absolute;left:' + p[0] + 'px;top:' + p[1] + 'px;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.12)">' + face(46) + '</div>').join('') + '</div>' + cta('Next', 'tips') },
+    { id: 'tips', stage: 'Create likeness', title: 'Tips: lighting', desc: 'A bottom sheet with good and bad examples. Swipe or tap Next.',
+      html: () => sheetOver(progress(.4) + '<p class="ttl">Take 6 selfies</p><div style="flex:1"></div>',
+        '<p class="muted" style="text-align:center;margin:18px 0 4px;font-size:13px">For best results</p><p style="text-align:center;font-size:18px;margin:0 0 16px">Use bright, even lighting</p>' +
+        '<div style="display:flex;gap:10px;padding:0 12px"><div class="tipcard" style="border-color:#d12121"><div class="ph face">' + FACE + '</div><b style="background:#d12121">✕</b></div><div class="tipcard" style="border-color:var(--p-green)"><div class="ph face">' + FACE + '</div><b style="background:var(--p-green)">✓</b></div></div>' +
+        '<div style="margin-top:28px">' + dashes(2, 0) + '</div>' + cta('Next', 'tips2'), 360) },
+    { id: 'tips2', stage: 'Create likeness', title: 'Tips: glasses', desc: 'The last tip. Open Camera starts the capture. (Doji\'s middle tip wasn\'t captured on Mobbin.)',
+      html: () => sheetOver(progress(.4) + '<p class="ttl">Take 6 selfies</p><div style="flex:1"></div>',
+        '<p class="muted" style="text-align:center;margin:18px 0 4px;font-size:13px">For best results</p><p style="text-align:center;font-size:18px;margin:0 0 16px">Remove glasses and headphones</p>' +
+        '<div style="display:flex;gap:10px;padding:0 12px"><div class="tipcard" style="border-color:#d12121"><div class="ph face">' + FACE + '</div><b style="background:#d12121">✕</b></div><div class="tipcard" style="border-color:var(--p-green)"><div class="ph face">' + FACE + '</div><b style="background:var(--p-green)">✓</b></div></div>' +
+        '<div style="margin-top:28px">' + dashes(2, 1) + '</div>' + cta('Open Camera', 'camera'), 360) },
+    { id: 'camera', stage: 'Create likeness', title: 'Selfie camera', dark: true, desc: 'Live front camera. The pill rates the lighting. Tap the shutter six times.',
+      html: () => '<div class="hdr" style="color:#fff">' + backTo('selfies') + '<div style="justify-self:center" class="lightpill">' + svg('sun').replace('<svg', '<svg style="width:12px;height:12px;stroke:#fff;fill:none"') + 'Good</div><div class="r" style="padding-right:8px;font-size:13px">1/6</div></div>' +
+        '<p class="ttl" style="color:rgba(255,255,255,.92);margin-top:4px">Look straight ahead</p><div style="flex:1"></div>' + go('notify', 'Shutter (after 6 shots)', 'shutter') },
+    { id: 'notify', stage: 'Create likeness', title: 'Turn on notifications', desc: 'The likeness takes a while to make. Doji asks to notify you when it\'s ready.',
+      html: () => progress(.7, '', go('brands', 'Skip', '', 'Skip')) +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 12px">' + '<i style="aspect-ratio:1;border-radius:50%;background:var(--p-ink)"></i>'.repeat(6) + '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px;flex:1"><i style="border-radius:14px;background:var(--p-ink)"></i><i style="border-radius:14px;background:var(--p-ink)"></i></div>' +
+        '<p style="text-align:center;font-size:17px;margin:20px 16px 4px">Turn on notifications to know when your likeness is ready</p>' + cta('Enable Notifications', 'brands') },
+    // Taste & profile
+    { id: 'brands', stage: 'Taste and profile', title: 'Select 3+ brands', desc: 'Choosing brands teaches Doji your taste. Continue appears after the third pick.',
+      html: () => progress(.82, '', '<span class="ldot"></span>') + '<p class="ttl">Select 3+ brands you like</p><p class="sub">This teaches Doji your taste</p><div style="margin-top:14px" class="search">' + svg('search') + 'Search for brands</div>' +
+        '<div class="chips scroll">' + ['Rick Owens', 'Alaïa*', 'Balenciaga', 'Maison Margiela', 'Bottega Veneta', 'Acne Studios', 'Miu Miu', 'Prada', 'The Row', 'Ganni', 'Khaite', 'Jacquemus', 'Chloé*', 'Toteme', 'Jil Sander', 'Coperni', 'Courrèges', 'Moschino', 'Lemaire', 'Loewe', 'Simone Rocha*', 'Paloma Wool'].map(b => '<span class="chip ' + (b.endsWith('*') ? 'on' : '') + '">' + b.replace('*', '') + '</span>').join('') + '</div>' +
+        '<div style="position:absolute;left:0;right:0;bottom:6px">' + cta('Continue', 'username') + '</div>' },
+    { id: 'username', stage: 'Taste and profile', title: 'Create a username', desc: 'Pick the handle shown on your profile and looks.',
+      html: () => progress(.92, 'brands', '<span class="ldot"></span>') + '<p class="ttl">Create a username</p><p class="sub">Appears on your profile, change it anytime</p><div style="flex:1;display:grid;place-items:center;font-size:23px;color:var(--p-3)">username</div>' + cta('Next', 'profilepic') + keyboard() },
+    { id: 'profilepic', stage: 'Taste and profile', title: 'Set your profile pic', desc: 'Upload a photo from the library, or skip for now.',
+      html: () => progress(1, 'username', '<span class="ldot"></span>') + '<p class="ttl">Set your profile pic</p><p class="sub">Appears on your profile, change it anytime</p>' +
+        '<div style="display:grid;justify-items:center;gap:12px;margin-top:40px"><div style="width:156px;height:156px;border-radius:50%;background:var(--p-fill);border:1.5px solid var(--p-line);position:relative;overflow:hidden"><i style="position:absolute;left:50%;top:22%;width:58px;height:58px;margin-left:-29px;border-radius:50%;background:#fff"></i><i style="position:absolute;left:10%;right:10%;bottom:-38px;height:78px;border-radius:50%;background:#fff"></i></div><div style="font-size:16px">samlee</div>' + btn('Upload photo', 'friends') + '</div>' +
+        '<div style="flex:1"></div>' + go('friends', 'Skip', '', '<div style="text-align:center;padding-bottom:30px">Skip</div>') },
+    { id: 'friends', stage: 'Taste and profile', title: 'Find all your friends', desc: 'A fork in the journey: connect contacts, or go straight into the app.',
+      html: () => progress(1, 'profilepic', '<span class="ldot"></span>') + '<p class="ttl">Find all your friends</p><p class="sub">Keep up with their style and try on their looks</p>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:14px 12px 0">' + ph(170) + ph(170) + ph(170) + '</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px 12px 0;height:80px;overflow:hidden;-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent)">' + ph(170) + ph(170) + ph(170) + '</div>' +
+        '<div style="flex:1"></div>' + '<div class="cta-row" style="padding-bottom:6px">' + btn('Find Your Friends', 'contacts') + '</div>' + go('foryou', 'Continue Without Friends', '', '<div style="text-align:center;padding:10px 0 28px">Continue Without Friends</div>') },
+    // Friends
+    { id: 'contacts', stage: 'Friends', title: 'Contacts primer', desc: 'Prepares you for the iOS contacts prompt and suggests "Share All Contacts".',
+      html: () => hdr(backTo('friends')) + '<p class="ttl">Find all your friends</p><p class="sub"><span style="color:#2a5ad9">Share All Contacts</span> to find your friends on Doji and try on what they\'re wearing</p>' +
+        '<div style="margin:16px 40px 0;border:6px solid var(--p-ink);border-radius:28px;padding:10px 10px 12px;display:grid;gap:8px;flex:1">' +
+        '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">' + '<i style="aspect-ratio:1;border-radius:50%;background:#9ea8d6"></i>'.repeat(28) + '</div>' +
+        '<div style="font:700 14px var(--sans);text-align:center">How do you want to share contacts?</div><div style="font:500 10px var(--sans);text-align:center;background:var(--p-fill);border-radius:99px;padding:5px">Select Contacts</div><div style="font:500 10px var(--sans);text-align:center;color:#2a5ad9;border:1px solid var(--p-line);border-radius:99px;padding:5px">Share All Contacts</div></div>' +
+        cta('Next', 'invite') },
+    { id: 'invite', stage: 'Friends', title: 'Invite your friends', desc: 'Your real phone contacts, each with an Invite button. Done enters the app.',
+      html: () => hdr(backTo('contacts')) + '<p class="ttl">Invite your friends</p><p class="sub">Doji\'s more fun with people you know</p><div class="search" style="margin-top:14px">' + svg('search') + 'Search contacts</div><div class="hair" style="margin-top:12px"></div>' +
+        '<div class="scroll">' + ['Anna Haro', 'Daniel Higgins', 'David Taylor', 'Hank Zakroff', 'John Appleseed', 'Kate Bell'].map(n => row('<span style="width:32px;height:32px;border-radius:50%;background:var(--p-fill);display:grid;place-items:center;font-size:11px;color:var(--p-2)">' + n.split(' ').map(w => w[0]).join('') + '</span>', n, '+1 555-0100', btn('Invite', 'invitewith', 'sm'))).join('') + '</div>' + cta('Done', 'foryou') },
+    { id: 'invitewith', stage: 'Friends', title: 'Invite with', desc: 'Send the invite by Messages or WhatsApp with a ready-written message.',
+      html: () => sheetOver(hdr(backTo('contacts')) + '<p class="ttl">Invite your friends</p><div style="flex:1"></div>',
+        '<div class="st">Invite With</div><div style="display:flex;justify-content:center;gap:18px;align-items:flex-start">' +
+        go('invite', 'Messages', '', '<div style="display:grid;justify-items:center;gap:6px;font-size:11px"><span style="width:48px;height:48px;border-radius:50%;background:#40c75a;display:grid;place-items:center">' + svg('msg').replace('<svg', '<svg style="width:22px;height:22px;stroke:#fff;fill:#fff"') + '</span>Messages</div>') +
+        '<span class="muted" style="padding-top:16px">or</span>' +
+        go('invite', 'WhatsApp', '', '<div style="display:grid;justify-items:center;gap:6px;font-size:11px"><span style="width:48px;height:48px;border-radius:50%;background:#40c75a;display:grid;place-items:center">' + svg('msg').replace('<svg', '<svg style="width:22px;height:22px;stroke:#fff;fill:none"') + '</span>WhatsApp</div>') + '</div>', 190) },
+    // Discover
+    { id: 'foryou', stage: 'Discover', title: 'For You', desc: 'Home. A feed of looks people styled. The New Looks pill holds your pending try-ons.',
+      html: () => forYouBody() },
+    { id: 'following', stage: 'Discover', title: 'Following (empty)', desc: 'Until you connect contacts or follow people, Following asks you to find friends.',
+      html: () => feedtabs('following') + '<div style="flex:1;display:grid;align-content:center;justify-items:center;text-align:center;padding:0 20px"><div style="display:flex;gap:4px;height:200px;width:100%;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)">' + ph(200) + ph(200) + ph(200) + '</div>' +
+        '<p class="ttl" style="margin-top:8px">Find All Your Friends</p><p class="muted" style="margin:6px 0 18px;font-size:13px">See what they\'re wearing<br>and try on their looks</p>' + btn('Connect Contacts', 'contacts') + '</div>' + tabbar('home') },
+    { id: 'shop', stage: 'Discover', title: 'Shop', desc: 'New arrivals from your brands. The heart saves a product to Favorites.',
+      html: () => shopBody() },
+    { id: 'shop-saved', stage: 'Discover', title: 'Saved to Favorites', desc: 'Tapping a heart shows a toast. View opens your private Favorites collection.',
+      html: () => shopBody(toast('Saved to Favorites', go('favorites', 'View Favorites', 'btn sm', 'View'), true), true) },
+    { id: 'search', stage: 'Discover', title: 'Search', desc: 'Recently viewed products, featured collections, top creators and brands for you.',
+      html: () => searchDiscover() },
+    { id: 'search-typing', stage: 'Discover', title: 'Search suggestions', desc: 'Suggestions update as you type. Pick one to see results.',
+      html: () => '<div class="row" style="padding:8px 14px"><span style="flex:1;display:flex;gap:8px;align-items:center">' + svg('search').replace('<svg', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none"') + 'Bag|</span><span class="muted">✕</span><span style="width:.5px;height:18px;background:var(--p-line)"></span>' + go('search', 'Cancel', '', 'Cancel') + '</div><div class="hair"></div>' +
+        '<div class="scroll" style="padding-top:6px">' + [['Bag', ''], ['Bag', 's'], ['Shoulder Bags', '']].map(t => go('results', 'Suggestion: ' + t[0] + t[1], '', row('<span style="width:30px;height:30px;border-radius:50%;border:1px solid var(--p-line);display:grid;place-items:center">' + svg('search').replace('<svg', '<svg style="width:12px;height:12px;stroke:currentColor;fill:none"') + '</span>', '<span style="font-weight:400">' + t[0] + '<span class="muted">' + t[1] + '</span></span>'))).join('') + '</div>' + keyboard() },
+    { id: 'results', stage: 'Discover', title: 'Search results', desc: 'Looks and products mixed in two columns. Chips narrow by type, category and brand.',
+      html: () => hdr(backTo('search'), 'Bag') + '<div class="row" style="padding:2px 12px 10px;gap:6px;overflow:hidden">' + go('filters', 'Filters', 'chip sm', svg('sliders').replace('<svg', '<svg style="width:12px;height:12px;stroke:currentColor;fill:none"')) + '<span class="chip sm on">All</span><span class="chip sm">Looks</span><span class="chip sm">Products</span><span class="chip sm">Category ⌄</span></div>' +
+        '<div class="scroll" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 8px;align-items:start">' +
+        '<div style="display:grid;gap:10px">' + lookCard('lena_v', 'Simone Rocha, KNWLS and more', '3d') + '</div>' +
+        '<div style="display:grid;gap:10px">' + go('product', 'Open a product', '', prodPh(130, 'bag') + '<div style="font-size:10px;text-align:left;margin-top:5px"><b>Nensi Avetisian</b> Bag Smocking Big Pink · $490</div>') + ph(170) + '</div></div>' + newLooks(8) + tabbar('search') },
+    { id: 'filters', stage: 'Discover', title: 'Filters', desc: 'Type, Brand, Sort and Department panes. Clear All resets; View Results applies.',
+      html: () => sheetOver('', '<div class="st">Filters</div><div class="row" style="color:var(--p-2);font-size:12px">' + svg('search').replace('<svg', '<svg style="width:12px;height:12px;stroke:currentColor;fill:none"') + ' Search for brands</div><div class="row" style="font-size:12px;gap:12px">adidas Originals ×<span>Chloé ×</span><span>Looks ×</span></div><div class="hair"></div>' +
+        '<div class="scroll" style="padding:6px 14px">' + [['☑', 'Your Brands', 16], ['☑', 'Chloé'], ['', 'A', 16], ['☐', 'A.P.C.'], ['☐', 'Acne Studios'], ['☑', 'adidas Originals'], ['☐', 'Aeyde'], ['', 'B', 16], ['☐', 'Balenciaga']].map(r => '<div style="display:flex;gap:10px;align-items:center;padding:5px 0;font-size:' + (r[2] || 13) + 'px">' + (r[0] ? '<span style="font-size:15px">' + r[0] + '</span>' : '') + r[1] + '</div>').join('') + '</div>' +
+        '<div class="hair"></div><div style="display:flex;gap:14px;padding:10px 14px;font-size:12px"><span class="muted">Type •</span><span>Brand •</span><span class="muted">Sort</span><span class="muted">Department</span></div>' +
+        '<div class="two" style="padding-top:2px">' + btn('Clear All', 'results', 'gray') + btn('View Results', 'results') + '</div>', 610) },
+    { id: 'collection', stage: 'Discover', title: 'Featured collection', desc: 'A Doji-curated theme. Follow it, or add one of your own looks to it.',
+      html: () => hdr(backTo('search'), '', ico('share', '', 'Share')) + '<div class="scroll" style="text-align:center"><p class="ttl" style="font-size:22px">Alt Wedding Guest</p><p style="margin:4px 0;font-size:14px">In another life, we\'d all be invited</p><p class="muted" style="font-size:12px;margin:4px 0">6 Looks · 2.1k Try Ons · 🌐</p><p style="font-size:13px;margin:10px 0">by Doji</p>' +
+        '<div class="two" style="padding:6px 30px 16px">' + btn('Follow', 'collection', 'gray') + btn('Add Your Look', 'addlook') + '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 6px">' + [1, 2, 3].map(() => go('look', 'Open a look', '', ph(180) + '<div style="font-size:10px;padding-top:4px">Editor\'s pick</div>')).join('') + '</div></div>' + tabbar('search') },
+    { id: 'addlook', stage: 'Discover', title: 'Add to collection', desc: 'Pick looks from your profile or other collections, then add them.',
+      html: () => sheetOver('', '<div class="st">Add to Alt Wedding Guest</div><div class="chips" style="padding-top:0"><span class="chip sm on">Profile</span><span class="chip sm">Fav! ⭐</span><span class="chip sm">Drafts</span></div><div class="hair"></div>' +
+        '<div class="scroll" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px;align-content:start">' + ph(170) + '<div style="opacity:.4">' + ph(170) + '</div><div style="opacity:.4">' + ph(170) + '</div><div style="opacity:.4">' + ph(170) + '</div><div style="opacity:.4">' + ph(170) + '</div><div style="opacity:.4">' + ph(170) + '</div></div>' +
+        '<div class="two">' + '<span></span>'.slice(0, 0) + '</div><div style="padding:0 12px 22px">' + go('collection-added', 'Add 1 Look', 'btn', 'Add 1 Look').replace('class="btn"', 'class="btn" style="width:100%"') + '</div>', 610) },
+    { id: 'collection-added', stage: 'Discover', title: 'Look added', desc: 'A toast confirms the look joined the collection.',
+      html: () => hdr(backTo('search'), '', ico('share', '', 'Share')) + toast('Added 1 look to Alt Wedding Guest', '', true) + '<div class="scroll" style="text-align:center;padding-top:30px"><p style="margin:4px 0;font-size:14px">In another life, we\'d all be invited</p><p class="muted" style="font-size:12px;margin:4px 0">7 Looks · 2.1k Try Ons · 🌐</p><p style="font-size:13px;margin:10px 0">by Doji</p>' +
+        '<div class="two" style="padding:6px 30px 16px">' + btn('Follow', 'collection', 'gray') + btn('Add Your Look', 'addlook') + '</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 6px">' + ph(180) + ph(180) + ph(180) + '</div></div>' + tabbar('search') },
+    // Try on & save
+    { id: 'look', stage: 'Try on and save', title: 'Look detail', desc: 'The whole outfit. Try On puts it on your likeness. Tap the photo to see the items.',
+      html: () => lookBody() },
+    { id: 'look-liked', stage: 'Try on and save', title: 'Look liked', desc: 'The heart turns red. Liked looks are remembered.',
+      html: () => lookBody().replace('aria-label="Like"', 'aria-label="Like" style="color:var(--p-red)"').replace(I.heart + '</svg></span>', I.heart.replace('<path', '<path fill="currentColor"') + '</svg></span>') },
+    { id: 'look-ready', stage: 'Try on and save', title: 'New look ready', desc: 'After Try On, the look is generated in the background. Tap the toast to review it.',
+      html: () => lookBody(go('newlooks', 'Open New Looks', 'toast solo', '<div class="ph mini-ph">' + FIG + '</div>New look ready')) },
+    { id: 'inthelook', stage: 'Try on and save', title: 'In the Look', desc: 'Every product in the outfit, with hearts. Remix opens it in Create Look.',
+      html: () => sheetOver(lookBody(), '<div class="st">In the Look</div><div class="hscroll" style="gap:12px">' +
+        [['KNWLS', 'M60 X Knwls C…', '$631', 'shirt'], ['KNWLS', 'Lethal Skirt', '$533', 'pants'], ['Paris Texas', '100Mm Lace-U…', '$840', 'shoe']].map(p => go('product', 'Open a product', '', '<div style="width:104px;text-align:left;font-size:11px">' + prodPh(110, p[3]) + '<div style="margin-top:6px">' + p[0] + '<br>' + p[1] + '<br>' + p[2] + '</div></div>')).join('') +
+        '</div><div style="padding:16px 12px 24px">' + go('create-remix', 'Remix', 'btn', svg('remix').replace('<svg', '<svg style="width:13px;height:13px;stroke:#fff;fill:none"') + ' Remix').replace('class="btn"', 'class="btn" style="width:100%"') + '</div>', 300) },
+    { id: 'triedby', stage: 'Try on and save', title: 'Tried on by', desc: 'Everyone who tried this look on. Follow them from here.',
+      html: () => sheetOver(lookBody(), '<div class="st">Tried on by</div><div class="scroll">' +
+        [['jules', ''], ['noor.wears', 'fashion photographer'], ['theo.r', 'textile engineer • researcher'], ['lena_v', 'Professional makeup artist…'], ['ines', 'bored'], ['kai', 'follow me on instagram'], ['sora', '']].map(r => row('<span class="av" style="width:40px;height:40px"></span>', go('creator', 'Open profile', '', r[0]), r[1], '<span class="btn sm">Follow</span>')).join('') + '</div>', 560) },
+    { id: 'newlooks', stage: 'Try on and save', title: 'New Looks', desc: 'Review each try-on of you wearing the outfit. Discard it, or Save it.',
+      html: () => '<div class="hdr">' + ico('down', 'foryou', 'Close') + '<div class="c" style="display:flex;gap:5px;justify-content:center;align-items:center">New Looks <span class="badge">9</span></div><div class="r wordmark" style="padding-right:8px">Doji</div></div>' +
+        '<div class="scroll" style="position:relative">' + ph(440, '', 300) + '<div class="rail"><span class="av"></span>' + ico('remix', '', 'Remix') + ico('share', 'sharelook', 'Share') + '<span class="ico" style="color:var(--p-3)">' + svg('undo') + '</span>' + ico('more', '', 'More') + '</div></div>' +
+        '<div style="padding:6px 14px 0;font-size:12px;line-height:1.45"><b>samlee</b> <span class="muted">now</span><br>Styled by <b>mira.k</b> in KNWLS, Paris Texas</div>' +
+        '<div class="two">' + btn('Discard', 'foryou', 'gray') + btn('Save', 'savelook') + '</div>' },
+    { id: 'savelook', stage: 'Try on and save', title: 'Save to collections', desc: 'Saves to your Profile, plus any collections you tick. New Collection makes one.',
+      html: () => sheetOver('<div class="hdr"><span></span><div class="c">New Looks</div></div>' + ph(440, '', 300),
+        '<div style="padding-top:14px">' + row('<span class="av" style="width:36px;height:36px"></span>', '<span style="font-weight:400;font-size:15px">Profile</span>', '9 Looks', '<span style="width:20px;height:20px;border-radius:50%;background:var(--p-ink);color:#fff;display:grid;place-items:center;font:600 10px var(--sans)">✓</span>') + '</div><div class="hair"></div>' +
+        '<div class="muted" style="padding:8px 14px 2px;font-size:12px">Collections</div>' +
+        row('<span style="width:36px;height:36px;border-radius:6px;background:var(--p-fill)"></span>', '<span style="font-weight:400;font-size:15px">Fav! ⭐</span>', '1 Looks', '<span style="width:20px;height:20px;border-radius:50%;background:var(--p-ink);color:#fff;display:grid;place-items:center;font:600 10px var(--sans)">✓</span>') +
+        row('<span style="width:36px;height:36px;border-radius:6px;background:var(--p-fill);display:grid;place-items:center">' + svg('lock').replace('<svg', '<svg style="width:14px;height:14px;stroke:var(--p-2);fill:none"') + '</span>', '<span style="font-weight:400;font-size:15px">Drafts</span>', '0 Looks', '<span class="muted" style="font-size:18px">⊕</span>') +
+        '<div style="flex:1"></div><div class="two">' + btn('New Collection', 'savelook', 'gray') + btn('Save', 'profile') + '</div>', 330) },
+    { id: 'sharelook', stage: 'Try on and save', title: 'Share Look', desc: 'Swipe between share cards, then post to Stories, share, copy the link or save the image.',
+      html: () => hdr(ico('down', 'look', 'Close'), 'Share Look') + '<div style="flex:1;padding:6px 26px 0;display:flex"><div style="flex:1;border:1px solid var(--p-line);padding:10px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:9px"><span><span style="font:500 7px var(--sans)">TOP</span><br>KNWLS</span><span><span style="font:500 7px var(--sans)">SHOES</span><br>Paris Texas</span></div><b style="font-size:16px">mira.k</b><div style="flex:1;display:flex;position:relative">' + ph(360) + '<span style="position:absolute;right:4px;bottom:2px">Doji</span></div></div></div>' +
+        '<div style="padding:12px 0">' + '<div class="dashes">' + '<i class="on" style="width:5px;height:5px;border-radius:50%"></i><i style="width:5px;height:5px;border-radius:50%"></i><i style="width:5px;height:5px;border-radius:50%"></i><i style="width:5px;height:5px;border-radius:50%"></i></div></div>' +
+        '<div style="display:flex;justify-content:center;gap:16px;padding-bottom:26px;font-size:10px;text-align:center">' +
+        ['Stories', 'Share', 'Link', 'Save'].map((t, i) => go(i === 2 ? 'sharelook-copied' : 'sharelook', t, '', '<div style="display:grid;gap:5px;justify-items:center"><span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:' + (i === 0 ? 'linear-gradient(45deg,#f5a623,#e1306c,#833ab4)' : 'var(--p-fill)') + '">' + svg(['spark', 'share', 'link', 'down'][i]).replace('<svg', '<svg style="width:17px;height:17px;stroke:' + (i === 0 ? '#fff' : 'currentColor') + ';fill:none"') + '</span>' + t + '</div>')).join('') + '</div>' },
+    { id: 'sharelook-copied', stage: 'Try on and save', title: 'Link copied', desc: 'Copying the link confirms with a toast.',
+      html: () => SCREEN_BY_ID.sharelook.html() + toast('Look link copied') },
+    { id: 'product', stage: 'Try on and save', title: 'Product detail', desc: 'Photos, price and two choices: Buy at the store, or Try On first.',
+      html: () => hdr(backTo('shop')) + '<div class="scroll"><div style="padding:0 30px">' + ph(290) + '</div><div style="display:flex;gap:4px;justify-content:center;padding:10px 0"><i style="width:4px;height:4px;border-radius:50%;background:var(--p-faint)"></i><i style="width:4px;height:4px;border-radius:50%;background:var(--p-2)"></i><i style="width:4px;height:4px;border-radius:50%;background:var(--p-faint)"></i><i style="width:4px;height:4px;border-radius:50%;background:var(--p-faint)"></i><i style="width:4px;height:4px;border-radius:50%;background:var(--p-faint)"></i></div>' +
+        '<div style="display:flex;padding:0 14px;font-size:13px;line-height:1.4"><div style="flex:1"><b>Chloé</b><br>Check Double-Breasted Jacket<br>$3,290</div>' + ico('heart', 'shop-saved', 'Save to Favorites') + ico('share', '', 'Share') + '</div>' +
+        '<div class="two">' + btn('Buy ↗', 'product', 'gray') + btn('Try On', 'look-ready') + '</div><div class="sect">More to Explore</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 8px">' + ph(200) + prodPh(150, 'shirt') + '</div></div>' + tabbar('home') },
+    // Create
+    { id: 'create', stage: 'Create Look', title: 'Create Look', desc: 'Build an outfit slot by slot: top, bottoms, shoes, accessories and a bag.',
+      html: () => createBody('empty') },
+    { id: 'picker', stage: 'Create Look', title: 'Select a Top', desc: 'Browse products for one slot. Filter by Favorites, Category, Brand or Color.',
+      html: () => hdr(backTo('create'), 'Select a Top', ico('search', '', 'Search')) + '<div class="hscroll" style="padding-bottom:8px">' + ['shirt', 'pants', 'shoe', 'shirt', 'glasses', 'bag'].map((k, i) => '<span style="width:36px;height:40px;display:grid;place-items:center;border-radius:5px;' + (i === 0 ? 'box-shadow:inset 0 0 0 1.5px var(--p-ink)' : '') + '">' + svg(k).replace('<svg', '<svg style="width:20px;height:20px;stroke:var(--p-faint);fill:none"') + '</span>').join('') + '</div>' +
+        '<div class="row" style="padding:0 12px 6px;gap:5px;overflow:hidden"><span class="chip sm">' + svg('sliders').replace('<svg', '<svg style="width:11px;height:11px;stroke:currentColor;fill:none"') + '</span><span class="chip sm">Favorites</span><span class="chip sm">Category ⌄</span><span class="chip sm">Brand ⌄</span><span class="chip sm">Color ⌄</span></div>' +
+        '<div class="scroll"><div class="prodgrid">' + [['Chloé', 'High-Neck Cropped Jacket'], ['Simone Rocha', 'Lace-Trim Camisole Top'], ['Gucci', 'Fine Silk Faille Jacket'], ["Levi's", "80'S Denim Jacket"]].map(p => go('create-filled', 'Pick a product', '', '<div style="text-align:left">' + prodPh(130, 'shirt') + '<div style="font-size:11px;margin-top:6px"><b>' + p[0] + '</b> ' + p[1] + '</div></div>')).join('') + '</div></div>' },
+    { id: 'create-filled', stage: 'Create Look', title: 'Slot filled', desc: 'Your pick sits in its slot, locked so Style Me keeps it.',
+      html: () => createBody('filled') },
+    { id: 'create-loading', stage: 'Create Look', title: 'Style Me (thinking)', desc: 'Style Me fills the unlocked slots. Skeletons show while it chooses.',
+      html: () => createBody('loading').replace('data-go="create-loading"', 'data-go="create-styled"').replace('data-label="Style Me"', 'data-label="Style Me (finish)"') },
+    { id: 'create-styled', stage: 'Create Look', title: 'Styled outfit', desc: 'A complete outfit. Try on sends it to your likeness.',
+      html: () => createBody('styled') },
+    { id: 'create-remix', stage: 'Create Look', title: 'Remix a look', desc: 'Remix opens Create Look with the look\'s items already in place.',
+      html: () => createBody('styled') },
+    { id: 'create-trying', stage: 'Create Look', title: 'Trying on', desc: 'A toast shows the try-on is running, then New Looks opens with the result.',
+      html: () => createBody('trying').replace(/data-go="create-trying"/, 'data-go="newlooks"').replace('data-label="Try on"', 'data-label="Try on (open result)"') },
+    // Activity
+    { id: 'activity', stage: 'Activity', title: 'Activity', desc: 'Who tried on looks you styled. Red dots mark what\'s new.',
+      html: () => '<div class="hdr"><span></span><div class="c" style="font-size:15px">Activity</div><div class="r" style="padding-right:10px"><span style="width:18px;height:18px;border-radius:50%;border:1px solid var(--p-ink);display:grid;place-items:center;font:9px var(--sans)">1</span></div></div>' +
+        '<div class="scroll">' + [['kai and sora', '4h'], ['ines, ada.m and 1 other', '1d'], ['theo.r and lena_v', '6d'], ['jules', '6d']].map(a => go('look', 'Open the look', '', '<div class="row" style="padding-left:6px;text-align:left"><i class="dot" style="width:4px;height:4px"></i><span style="position:relative;width:38px;height:38px"><span class="av" style="width:28px;height:28px;position:absolute;left:0;top:0"></span><span class="av" style="width:28px;height:28px;position:absolute;right:0;bottom:0;box-shadow:0 0 0 2px #fff"></span></span><span class="grow" style="font-size:12px"><b>' + a[0] + '</b> tried on a look you styled. <span class="muted">' + a[1] + '</span></span>' + ph(38, '', 38) + '</div>')).join('') + '</div>' + newLooks(5) + tabbar('activity') },
+    // Profile
+    { id: 'profile', stage: 'Profile and settings', title: 'Profile', desc: 'Your public looks and collections. Private holds Favorites. The gear opens Settings.',
+      html: () => '<div class="hdr"><span></span><span></span><div class="r">' + ico('share', '', 'Share profile') + ico('gear', 'settings', 'Settings') + '</div></div>' +
+        '<div class="scroll"><div style="display:flex;gap:12px;align-items:center;padding:4px 14px"><span class="av" style="width:58px;height:58px"></span><div><div style="font-size:19px">samlee</div><div style="font-size:12px;margin-top:3px">1 Following &nbsp;&nbsp; 8 Try Ons</div></div></div>' +
+        '<div class="two" style="padding-bottom:12px">' + btn('Edit Profile', 'profilepic', 'out') + btn('Update Likeness', 'likeness', 'out') + '</div>' +
+        '<div class="vis"><span class="on">🌐 Public</span>' + go('favorites', 'Private', '', '<span>🔒 Private</span>') + '</div><div class="hair"></div>' +
+        '<div class="sect">Collections ›</div><div style="padding:0 14px">' + go('favcollection', 'Open Fav! collection', '', '<div style="width:120px;text-align:left"><div style="border:1px solid var(--p-line);border-radius:10px;padding:8px">' + ph(100) + '</div><div style="font-size:13px;margin-top:5px">Fav! ⭐</div><div class="muted" style="font-size:11px">1 Look</div></div>') + '</div>' +
+        '<div class="sect">Looks</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 6px">' + ph(170) + ph(170) + ph(170) + '</div></div>' + newLooks(8) + tabbar('profile') },
+    { id: 'favorites', stage: 'Profile and settings', title: 'Favorites', desc: 'Private list of products you hearted.',
+      html: () => hdr(backTo('profile'), '<div>Favorites<div class="muted" style="font-size:10px">3 Products</div></div>') + '<div class="scroll"><div class="prodgrid">' +
+        prodCard('Chloé', 'Check Double-Breasted Jac…', '$3,290', '19h', 'shirt', 'favorites', true) + prodCard('Almaz', 'Barrel-Leg Trousers', '$1,899', '2w', 'pants', 'favorites', true) + prodCard('Le Silla', 'Vivienne Slingback Pumps', '$820', '4d', 'shoe', 'favorites', true) + '</div></div>' + tabbar('profile') },
+    { id: 'favcollection', stage: 'Profile and settings', title: 'Your collection', desc: 'One of your own collections, with Add, Organize and Edit.',
+      html: () => hdr(backTo('profile'), '', ico('share', '', 'Share')) + '<div class="scroll" style="text-align:center"><p class="ttl" style="font-size:22px">Fav! ⭐</p><p class="muted" style="font-size:12px;margin:4px 0">4 Looks · 3 Try Ons</p><p style="font-size:13px;margin:8px 0 14px;display:flex;gap:6px;justify-content:center;align-items:center"><span class="av"></span>by samlee</p>' +
+        '<div class="lookgrid">' + lookCard('samlee', 'Givenchy and more', '1w') + lookCard('samlee', 'R13, Orseund Iris and more', '1w') + '</div></div>' +
+        '<div class="colltool">' + go('addlook', 'Add', '', '<div>' + svg('plus') + 'Add</div>') + '<div>' + svg('grid') + 'Organize</div><div>' + svg('pencil') + 'Edit</div></div>' },
+    { id: 'creator', stage: 'Profile and settings', title: 'Creator profile', desc: 'Someone else\'s profile: their looks and a Follow button.',
+      html: () => hdr(backTo('look'), '', ico('more', '', 'More')) + '<div class="scroll"><div style="display:flex;gap:12px;align-items:center;padding:4px 14px"><span class="av" style="width:58px;height:58px"></span><div><div style="font-size:19px">mira.k</div><div style="font-size:12px;margin-top:3px">628 Looks &nbsp; 2.3k Try Ons</div></div></div>' +
+        '<div style="padding:14px 12px">' + go('creator', 'Follow', 'btn', 'Follow').replace('class="btn"', 'class="btn" style="width:100%"') + '</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 6px">' + [1, 2, 3, 4, 5, 6].map(() => go('look', 'Open a look', '', ph(160))).join('') + '</div></div>' },
+    { id: 'settings', stage: 'Profile and settings', title: 'Settings', desc: 'Likeness, profile, brands and shopping preference, support links, and Log Out.',
+      html: () => hdr(backTo('profile'), 'Settings') + '<div class="scroll"><div style="margin:6px 12px 18px;border:1px solid var(--p-line);border-radius:14px;padding:10px;display:flex;gap:10px;align-items:center"><span style="width:38px;height:38px;border-radius:9px;background:linear-gradient(#36b3ff,#1a66f0);display:grid;place-items:center">' + svg('safari').replace('<svg', '<svg style="width:24px;height:24px;stroke:#fff;fill:none"') + '</span><div style="font-size:14px">Install the Doji Extension<div class="muted" style="font-size:11px">Try on anything directly in Safari</div></div></div>' +
+        [['Update Likeness', 'likeness', '›'], ['Edit Profile', 'profilepic', '›'], ['Your Brands', 'brands', '›'], ['Shopping Preference', 'preference', '›'], ['Account', '', '›']].map(r => (r[1] ? go(r[1], r[0], '', '') : '') + '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px"' + (r[1] ? ' data-go="' + r[1] + '" data-label="' + r[0] + '" role="button" tabindex="0"' : '') + '>' + r[0] + '<span style="color:var(--p-3)">' + r[2] + '</span></div>').join('') +
+        '<div class="muted" style="padding:20px 14px 4px;font-size:11px">Support</div>' + ['Review Doji', 'Contact Us', 'Privacy Policy', 'Terms & Conditions'].map(t => '<div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:14px">' + t + '<span style="color:var(--p-3)">↗</span></div>').join('') +
+        go('welcome', 'Log Out', '', '<div style="padding:24px 14px;font-size:14px;text-align:left">Log Out</div>') + '</div>' },
+    { id: 'preference', stage: 'Profile and settings', title: 'Shopping preference', desc: 'Choose Menswear or Womenswear. The chosen one turns black.',
+      html: () => hdr(backTo('settings'), 'Shopping Preference') + '<div style="flex:1;display:grid;align-content:center;justify-items:center;gap:8px;padding-bottom:80px"><div style="font-size:21px">What do you wear?</div>' + go('preference', 'Menswear', '', '<div style="font-size:30px;color:var(--p-faint)">Menswear</div>') + '<div style="font-size:30px">Womenswear</div></div>' }
+  ];
+  const SCREEN_BY_ID = {};
+  SCREENS.forEach(s => { SCREEN_BY_ID[s.id] = s; });
+  // Settings rows above were emitted twice (an empty button + row); strip the empty buttons.
+  const clean = (html) => html.replace(/<button type="button" class="" data-go="[^"]*" data-label="[^"]*"><\/button>/g, '');
+
+  const statusBar = (dark) => '<div class="sb"' + (dark ? ' style="color:#fff"' : '') + '><span>9:41</span><span class="icons"><span style="font-size:10px;letter-spacing:-1px">▂▄▆</span><span class="bat"></span></span></div>';
+  const renderScreen = (s) => statusBar(s.dark) + '<div class="body">' + clean(s.html()) + '</div><div class="home-ind"></div>';
+
+  // ---------- prototype ----------
+  const phone = document.getElementById('phone');
+  const indexEl = document.getElementById('index');
+  const history = [];
+  let current = 'welcome';
+
+  // Index grouped by stage
+  const stages = [];
+  SCREENS.forEach(s => { if (!stages.includes(s.stage)) stages.push(s.stage); });
+  indexEl.innerHTML = stages.map(st => '<div><h3>' + st + '</h3><ul>' + SCREENS.filter(s => s.stage === st).map(s => '<li><button type="button" data-jump="' + s.id + '">' + s.title + '</button></li>').join('') + '</ul></div>').join('');
+
+  function labelOf(el) {
+    return el.getAttribute('data-label') || el.getAttribute('aria-label') || (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40) || 'Tap';
+  }
+
+  function show(id, push) {
+    const s = SCREEN_BY_ID[id];
+    if (!s) return;
+    if (push && current !== id) history.push(current);
+    current = id;
+    phone.className = 'phone-screen' + (s.dark ? ' dark' : '');
+    phone.innerHTML = renderScreen(s);
+    phone.setAttribute('aria-label', s.title + ' screen');
+    document.getElementById('i-stage').textContent = s.stage;
+    document.getElementById('i-title').textContent = s.title;
+    document.getElementById('i-desc').textContent = s.desc;
+    const seen = new Set();
+    const taps = [];
+    phone.querySelectorAll('[data-go]').forEach(el => {
+      const target = el.getAttribute('data-go');
+      if (!target || !SCREEN_BY_ID[target]) return;
+      const label = labelOf(el);
+      const key = label + '>' + target;
+      if (seen.has(key)) return;
+      seen.add(key);
+      taps.push('<button type="button" data-jump="' + target + '"><span>' + label + '</span><span>→ ' + SCREEN_BY_ID[target].title + '</span></button>');
+    });
+    document.getElementById('i-taps').innerHTML = taps.length ? '<h4>Taps on this screen</h4>' + taps.join('') : '';
+    indexEl.querySelectorAll('[data-jump]').forEach(b => b.setAttribute('aria-current', String(b.getAttribute('data-jump') === id)));
+    document.getElementById('sheet').addEventListener('keydown', e => {
+    const t = e.target.closest('.thumb');
+    if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); t.click(); }
+  });
+  document.getElementById('btn-back').disabled = history.length === 0;
+    try { localStorage.setItem('doji-journey-screen', id); } catch (e) {}
+  }
+
+  phone.addEventListener('click', e => {
+    const el = e.target.closest('[data-go]');
+    if (el && el.getAttribute('data-go')) show(el.getAttribute('data-go'), true);
+  });
+  phone.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest('[data-go]');
+    if (el && el.getAttribute('data-go')) { e.preventDefault(); show(el.getAttribute('data-go'), true); }
+  });
+  document.addEventListener('click', e => {
+    const j = e.target.closest('[data-jump]');
+    if (!j) return;
+    show(j.getAttribute('data-jump'), true);
+    if (j.closest('#sheet')) document.getElementById('walk-h').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.getElementById('btn-back').addEventListener('click', () => { if (history.length) show(history.pop(), false); });
+  document.getElementById('btn-restart').addEventListener('click', () => { history.length = 0; show('welcome', false); });
+
+  // ---------- contact sheet ----------
+  document.getElementById('sheet').innerHTML = SCREENS.map(s =>
+    '<div class="thumb" role="button" tabindex="0" data-jump="' + s.id + '" aria-label="Open ' + s.title + '"><div class="mini" aria-hidden="true"><div class="phone-screen' + (s.dark ? ' dark' : '') + '" inert>' + renderScreen(s) + '</div></div><small><b>' + s.title + '</b>' + s.stage + '</small></div>').join('');
+
+  let start = 'welcome';
+  const hash = (location.hash || '').slice(1);
+  if (hash && SCREEN_BY_ID[hash]) start = hash;
+  else { try { const saved = localStorage.getItem('doji-journey-screen'); if (saved && SCREEN_BY_ID[saved]) start = saved; } catch (e) {} }
+  show(start, false);
+})();
+</script>
+<script>if (window.mermaid) mermaid.initialize({ startOnLoad: true });</script>
+
+</body>
+</html>
