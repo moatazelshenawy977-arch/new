@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lattice — Code review for fast teams</title>
+<meta name="description" content="Lattice helps engineering teams ship smaller pull requests, review faster, and merge with confidence.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Top Announcement Bar -->
+<div class="announce">
+  <div class="announce__inner">
+    <span class="announce__dot" aria-hidden="true"></span>
+    <strong>Lattice Agent is now generally available</strong>
+    <a href="#features" class="announce__link">Read the launch post <span aria-hidden="true">→</span></a>
+  </div>
+</div>
+
+<!-- Floating Primary Navigation -->
+<header class="nav-wrap" id="top">
+  <nav class="nav" aria-label="Primary">
+    <a href="#top" class="logo" aria-label="Lattice home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="3.5" width="13" height="13" rx="3" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="7.5" y="7.5" width="13" height="13" rx="3" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+      </svg>
+      <span>Lattice</span>
+    </a>
+    <ul class="nav__links" id="navLinks">
+      <li><a href="#product">Product</a></li>
+      <li><a href="#customers">Customers</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#docs">Docs</a></li>
+      <li><a href="#blog">Blog</a></li>
+    </ul>
+    <div class="nav__actions">
+      <a href="#login" class="btn btn--ghost nav__login">Log in</a>
+      <a href="#signup" class="btn btn--pale">Sign up</a>
+      <button class="btn btn--ghost nav__menu" id="menuBtn" aria-expanded="false" aria-controls="navLinks">Menu</button>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Hero -->
+  <section class="hero container">
+    <div class="hero__copy reveal">
+      <span class="chip">New · Stacked pull requests</span>
+      <h1 class="display">The code review<br>platform for teams<br>that ship daily.</h1>
+      <p class="hero__lead">Break big changes into small, stacked pull requests. Review them faster, merge them safely, and keep your whole team moving.</p>
+      <div class="hero__ctas">
+        <a href="#signup" class="btn btn--pale btn--lg">Start for free</a>
+        <a href="#demo" class="btn btn--charcoal btn--lg">Book a demo</a>
+      </div>
+      <p class="hero__note">Free for individuals · Works with GitHub</p>
+    </div>
+
+    <!-- Luminous Polygon Graphic -->
+    <div class="hero__art" aria-hidden="true">
+      <svg class="polygon" viewBox="0 0 480 480">
+        <defs>
+          <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="15%" stop-color="#ffb931"/>
+            <stop offset="30%" stop-color="#ffffff"/>
+            <stop offset="40%" stop-color="#ffffff"/>
+            <stop offset="50%" stop-color="#2e73fc"/>
+          </linearGradient>
+          <linearGradient id="spectrum2" x1="1" y1="0" x2="0" y2="1">
+            <stop offset="15%" stop-color="#ffb931"/>
+            <stop offset="30%" stop-color="#ffffff"/>
+            <stop offset="40%" stop-color="#ffffff"/>
+            <stop offset="50%" stop-color="#2e73fc"/>
+          </linearGradient>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+          <filter id="glowSoft" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="14"/>
+          </filter>
+          <radialGradient id="core" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity=".08"/>
+            <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <circle cx="240" cy="240" r="220" fill="url(#core)"/>
+
+        <!-- blurred duplicates for depth -->
+        <g class="ring ring--a" filter="url(#glowSoft)" opacity=".35">
+          <rect x="120" y="120" width="240" height="240" rx="20" fill="none" stroke="#fafafa" stroke-width="2"/>
+        </g>
+        <g class="ring ring--b" filter="url(#glow)" opacity=".45">
+          <rect x="140" y="140" width="200" height="200" rx="16" fill="none" stroke="#fafafa" stroke-width="1.5" transform="rotate(22 240 240)"/>
+        </g>
+
+        <!-- crisp outlines -->
+        <g class="ring ring--a">
+          <rect x="120" y="120" width="240" height="240" rx="20" fill="none" stroke="#fafafa" stroke-width="1.2" opacity=".9"/>
+        </g>
+        <g class="ring ring--b">
+          <rect x="140" y="140" width="200" height="200" rx="16" fill="none" stroke="#fafafa" stroke-width="1" opacity=".75" transform="rotate(22 240 240)"/>
+        </g>
+        <g class="ring ring--c">
+          <rect x="105" y="105" width="270" height="270" rx="18" fill="none" stroke="#fafafa" stroke-width="1" opacity=".35" transform="rotate(-14 240 240)"/>
+        </g>
+        <g class="ring ring--d">
+          <rect x="160" y="160" width="160" height="160" rx="12" fill="none" stroke="#fafafa" stroke-width="1" opacity=".55" transform="rotate(45 240 240)"/>
+        </g>
+        <g class="ring ring--e">
+          <rect x="88" y="88" width="304" height="304" rx="20" fill="none" stroke="#737373" stroke-width="1" opacity=".5" transform="rotate(33 240 240)"/>
+        </g>
+
+        <!-- travelling spectral light -->
+        <g class="ring ring--a">
+          <rect class="beam" pathLength="1000" x="120" y="120" width="240" height="240" rx="20" fill="none" stroke="url(#spectrum)" stroke-width="2.4" stroke-linecap="round"/>
+          <rect class="beam beam--blur" pathLength="1000" x="120" y="120" width="240" height="240" rx="20" fill="none" stroke="url(#spectrum)" stroke-width="6" stroke-linecap="round" filter="url(#glow)"/>
+        </g>
+        <g class="ring ring--d">
+          <rect class="beam beam--rev" pathLength="1000" x="160" y="160" width="160" height="160" rx="12" fill="none" stroke="url(#spectrum2)" stroke-width="2" stroke-linecap="round" transform="rotate(45 240 240)"/>
+        </g>
+        <g class="ring ring--c">
+          <rect class="beam beam--slow" pathLength="1000" x="105" y="105" width="270" height="270" rx="18" fill="none" stroke="url(#spectrum2)" stroke-width="1.6" stroke-linecap="round" transform="rotate(-14 240 240)"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Product Demo Frame -->
+  <section class="container section" id="product">
+    <div class="demo reveal" id="demo">
+      <div class="demo__chrome">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="demo__url">app.lattice.dev / acme / web / pull / 4821</span>
+      </div>
+
+      <div class="demo__body">
+        <aside class="demo__side">
+          <div class="side__title">Stack</div>
+          <ol class="stack">
+            <li class="stack__item is-merged"><span class="stack__node"></span><div><b>#4818</b> Add billing schema</div></li>
+            <li class="stack__item is-merged"><span class="stack__node"></span><div><b>#4819</b> Invoice API endpoints</div></li>
+            <li class="stack__item is-active"><span class="stack__node"></span><div><b>#4821</b> Invoice list UI</div></li>
+            <li class="stack__item"><span class="stack__node"></span><div><b>#4824</b> PDF export</div></li>
+            <li class="stack__item"><span class="stack__node"></span><div><b>#4827</b> Email receipts</div></li>
+          </ol>
+          <div class="side__title">Files</div>
+          <ul class="files">
+            <li class="is-on">InvoiceList.tsx <span class="add">+42</span></li>
+            <li>useInvoices.ts <span class="add">+18</span> <span class="del">−3</span></li>
+            <li>invoice.test.ts <span class="add">+27</span></li>
+          </ul>
+        </aside>
+
+        <div class="demo__main">
+          <div class="panel is-shown" data-panel="review">
+            <div class="diff__head">
+              <span class="mono">src/billing/InvoiceList.tsx</span>
+              <span class="pill-mini">Viewed 2 / 3</span>
+            </div>
+            <pre class="diff mono" id="diffCode"></pre>
+            <div class="comment">
+              <div class="avatar" style="--hue:28">MK</div>
+              <div>
+                <div class="comment__meta"><b>maya.k</b> <span>commented · just now</span></div>
+                <p>Nice — can we memoize the sort so it doesn't re-run on every render?</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" data-panel="stacks">
+            <div class="diff__head"><span>Stack overview</span><span class="pill-mini">5 PRs · 2 merged</span></div>
+            <div class="graph">
+              <div class="graph__row"><span class="g-dot ok"></span><span class="g-line"></span><span class="mono">main</span></div>
+              <div class="graph__row"><span class="g-dot ok"></span><span>#4818 Add billing schema</span><span class="tag ok">Merged</span></div>
+              <div class="graph__row"><span class="g-dot ok"></span><span>#4819 Invoice API endpoints</span><span class="tag ok">Merged</span></div>
+              <div class="graph__row"><span class="g-dot run"></span><span>#4821 Invoice list UI</span><span class="tag run">In review</span></div>
+              <div class="graph__row"><span class="g-dot"></span><span>#4824 PDF export</span><span class="tag">Draft</span></div>
+              <div class="graph__row"><span class="g-dot"></span><span>#4827 Email receipts</span><span class="tag">Draft</span></div>
+            </div>
+          </div>
+
+          <div class="panel" data-panel="queue">
+            <div class="diff__head"><span>Merge queue · main</span><span class="pill-mini">Avg. 6m to merge</span></div>
+            <div class="queue">
+              <div class="queue__row"><span>#4819 Invoice API endpoints</span><div class="bar"><i style="--w:100%"></i></div><span class="tag ok">Merged</span></div>
+              <div class="queue__row"><span>#4790 Fix flaky auth test</span><div class="bar"><i class="anim" style="--w:72%"></i></div><span class="tag run">CI running</span></div>
+              <div class="queue__row"><span>#4802 Upgrade router</span><div class="bar"><i class="anim" style="--w:38%"></i></div><span class="tag run">Queued</span></div>
+              <div class="queue__row"><span>#4811 Dark mode tokens</span><div class="bar"><i style="--w:8%"></i></div><span class="tag">Waiting</span></div>
+            </div>
+          </div>
+
+          <div class="panel" data-panel="agent">
+            <div class="diff__head"><span>Lattice Agent</span><span class="pill-mini">Reviewed in 41s</span></div>
+            <div class="agent">
+              <div class="agent__msg"><span class="agent__icon">◇</span><p><b>Possible bug:</b> <code>invoices.sort()</code> mutates the cached array returned by <code>useInvoices</code>. Use <code>[...invoices].sort()</code> instead.</p></div>
+              <div class="agent__msg"><span class="agent__icon">◇</span><p><b>Suggestion:</b> wrap the sorted list in <code>useMemo</code> keyed on <code>invoices</code> and <code>sortKey</code>.</p></div>
+              <div class="agent__msg agent__msg--typing"><span class="agent__icon">◇</span><p><span class="typing"><i></i><i></i><i></i></span></p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo__fade" aria-hidden="true"></div>
+      <div class="demo__label">Review a whole feature as a stack of small, readable changes.</div>
+
+      <div class="demo__tabs" role="tablist" aria-label="Product views">
+        <button class="tab is-active" role="tab" aria-selected="true" data-tab="review">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h8M2 13h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Code review
+        </button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="stacks">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.4"/><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.4"/></svg>Stacks
+        </button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="queue">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 2v12M3 8h6a4 4 0 0 0 4-4V2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Merge queue
+        </button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="agent">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l1.6 4.9 4.9 1.6-4.9 1.6L8 14.5l-1.6-4.9L1.5 8l4.9-1.6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>AI reviewer
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Customer Stories -->
+  <section class="container section" id="customers">
+    <div class="section__head reveal">
+      <h2 class="section-heading">Trusted by teams that ship.</h2>
+      <div class="carousel__controls">
+        <button class="icon-btn" id="prevBtn" aria-label="Previous stories">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-btn" id="nextBtn" aria-label="Next stories">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="carousel" id="carousel">
+      <article class="story reveal">
+        <div class="story__logo story__logo--white">
+          <div class="band" style="--band:#ff5a1f"></div>
+          <span class="wordmark wordmark--dark"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#111" stroke-width="2.4"/><circle cx="12" cy="12" r="3" fill="#111"/></svg>Northwind</span>
+        </div>
+        <div class="story__body">
+          <span class="label">Fintech</span>
+          <p>“We cut our median time-to-merge from two days to four hours after moving the team onto stacks.”</p>
+          <a href="#" class="link-orange">Read story <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="story reveal">
+        <div class="story__logo" style="--panel:#2e73fc">
+          <span class="wordmark"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 18L12 4l8 14z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>Halcyon</span>
+        </div>
+        <div class="story__body">
+          <span class="label">Developer tools</span>
+          <p>“Reviewers finally see changes in the order they were written. Our review comments doubled in quality.”</p>
+          <a href="#" class="link-orange">Read story <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="story reveal">
+        <div class="story__logo story__logo--white">
+          <div class="band band--split"></div>
+          <span class="wordmark wordmark--dark"><svg width="22" height="22" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="#111"/><rect x="9" y="9" width="6" height="6" rx="1" fill="#fff"/></svg>Quanta</span>
+        </div>
+        <div class="story__body">
+          <span class="label">AI infrastructure</span>
+          <p>“The merge queue removed an entire class of broken-main incidents. On-call is quieter than ever.”</p>
+          <a href="#" class="link-orange">Read story <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="story reveal">
+        <div class="story__logo" style="--panel:#ffb931">
+          <span class="wordmark wordmark--dark"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 19V5h9a4 4 0 0 1 0 8H5" fill="none" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/></svg>Ferro</span>
+        </div>
+        <div class="story__body">
+          <span class="label">Logistics</span>
+          <p>“Onboarding new engineers takes days, not weeks. Small PRs are just easier to understand.”</p>
+          <a href="#" class="link-orange">Read story <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="story reveal">
+        <div class="story__logo" style="--panel:#171717">
+          <span class="wordmark"><svg width="22" height="22" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4" fill="none" stroke="#fff" stroke-width="2" transform="rotate(-30 12 12)"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg>Orbit</span>
+        </div>
+        <div class="story__body">
+          <span class="label">Commerce</span>
+          <p>“Lattice Agent catches the boring bugs so our reviewers can focus on design and architecture.”</p>
+          <a href="#" class="link-orange">Read story <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="story reveal">
+        <div class="story__logo story__logo--white">
+          <div class="band" style="--band:#16a34a"></div>
+          <span class="wordmark wordmark--dark"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 18l5-10 4 7 3-5 6 8" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>Meridian</span>
+        </div>
+        <div class="story__body">
+          <span class="label">Real estate</span>
+          <p>“Twelve engineers, one codebase, zero merge conflicts on Friday afternoons. That alone paid for it.”</p>
+          <a href="#" class="link-orange">Read story <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Feature Mosaic -->
+  <section class="container section" id="features">
+    <div class="section__head section__head--stack reveal">
+      <h2 class="section-heading">Everything you need to<br>move from idea to main.</h2>
+      <p class="muted">One workflow for writing, reviewing, and merging code, built for how modern teams actually work.</p>
+    </div>
+
+    <div class="mosaic">
+      <!-- wide panel -->
+      <article class="tile tile--wide reveal">
+        <div class="tile__copy">
+          <h3 class="feature-heading">Stacked pull requests</h3>
+          <p class="muted">Keep building while you wait for review. Lattice tracks dependencies between branches and rebases the whole stack for you when something changes below.</p>
+          <a href="#" class="link-orange">Learn about stacking <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="tile__media">
+          <div class="cli mono">
+            <div><span class="prompt">$</span> lt create -m "Invoice list UI"</div>
+            <div class="ok-text">✓ Created branch invoice-list-ui on top of invoice-api</div>
+            <div><span class="prompt">$</span> lt submit --stack</div>
+            <div class="dim">↑ Pushing 3 branches…</div>
+            <div class="ok-text">✓ #4819 updated · #4821 created · #4824 created</div>
+            <div><span class="prompt">$</span> <span class="caret"></span></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- paired cards -->
+      <article class="tile reveal">
+        <div class="tile__media tile__media--top">
+          <div class="mini-inbox">
+            <div class="mini-row"><span class="g-dot run"></span><span>Needs your review</span><b>4</b></div>
+            <div class="mini-row"><span class="g-dot"></span><span>Waiting on author</span><b>2</b></div>
+            <div class="mini-row"><span class="g-dot ok"></span><span>Approved</span><b>7</b></div>
+            <div class="mini-row"><span class="g-dot"></span><span>Drafts</span><b>3</b></div>
+          </div>
+        </div>
+        <div class="tile__copy">
+          <h3 class="feature-heading">A review inbox that makes sense</h3>
+          <p class="muted">See exactly what needs your attention across every repository, sorted by what unblocks your team first.</p>
+          <a href="#" class="link-orange">Explore the inbox <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="tile reveal">
+        <div class="tile__media tile__media--top">
+          <div class="mini-chart">
+            <div class="bars">
+              <i style="--h:78%"></i><i style="--h:64%"></i><i style="--h:70%"></i><i style="--h:52%"></i>
+              <i style="--h:44%"></i><i style="--h:36%"></i><i style="--h:30%"></i><i style="--h:22%"></i>
+            </div>
+            <div class="mini-chart__label"><span>Time to merge</span><b>−71%</b></div>
+          </div>
+        </div>
+        <div class="tile__copy">
+          <h3 class="feature-heading">Insights for engineering leads</h3>
+          <p class="muted">Track review time, PR size, and merge speed for every team, so you can find bottlenecks before they slow you down.</p>
+          <a href="#" class="link-orange">See insights <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <!-- stacked modules -->
+      <article class="tile tile--third reveal">
+        <svg class="tile__icon" width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M3 2v12M3 8h6a4 4 0 0 0 4-4V2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <h3 class="subheading">Merge queue</h3>
+        <p class="muted">Keep main green with batched, stack-aware merges.</p>
+      </article>
+      <article class="tile tile--third reveal">
+        <svg class="tile__icon" width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l1.6 4.9 4.9 1.6-4.9 1.6L8 14.5l-1.6-4.9L1.5 8l4.9-1.6z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        <h3 class="subheading">AI reviewer</h3>
+        <p class="muted">Instant first-pass reviews that catch bugs before humans look.</p>
+      </article>
+      <article class="tile tile--third reveal">
+        <svg class="tile__icon" width="20" height="20" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 7l2 1.5L5 10M9 10h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h3 class="subheading">CLI &amp; VS Code</h3>
+        <p class="muted">Create, restack, and submit without leaving your editor.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Closing CTA with section-transition artwork -->
+  <section class="container section" id="signup">
+    <div class="cta reveal">
+      <svg class="cta__art" viewBox="0 0 480 480" aria-hidden="true">
+        <g class="ring ring--a" filter="url(#glow)" opacity=".4"><rect x="120" y="120" width="240" height="240" rx="20" fill="none" stroke="#fafafa" stroke-width="1.5"/></g>
+        <g class="ring ring--a"><rect x="120" y="120" width="240" height="240" rx="20" fill="none" stroke="#fafafa" stroke-width="1" opacity=".7"/></g>
+        <g class="ring ring--b"><rect x="145" y="145" width="190" height="190" rx="14" fill="none" stroke="#fafafa" stroke-width="1" opacity=".45" transform="rotate(24 240 240)"/></g>
+        <g class="ring ring--a"><rect class="beam" pathLength="1000" x="120" y="120" width="240" height="240" rx="20" fill="none" stroke="url(#spectrum)" stroke-width="2" stroke-linecap="round"/></g>
+      </svg>
+      <div class="cta__copy">
+        <h2 class="section-heading">Ship your next feature<br>as a stack.</h2>
+        <p class="muted">Set up in two minutes. Free for individuals and open source.</p>
+        <div class="hero__ctas hero__ctas--center">
+          <a href="#" class="btn btn--pale btn--lg">Start for free</a>
+          <a href="#" class="btn btn--charcoal btn--lg">Talk to sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer__grid">
+    <div class="footer__brand">
+      <a href="#top" class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="13" height="13" rx="3" stroke="currentColor" stroke-width="1.6"/>
+          <rect x="7.5" y="7.5" width="13" height="13" rx="3" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+        </svg>
+        <span>Lattice</span>
+      </a>
+      <p class="caption">© 2026 Lattice, Inc.</p>
+    </div>
+    <div><div class="micro">Product</div><a href="#">Stacks</a><a href="#">Merge queue</a><a href="#">AI reviewer</a><a href="#">Insights</a></div>
+    <div><div class="micro">Resources</div><a href="#">Docs</a><a href="#">Changelog</a><a href="#">Guides</a><a href="#">Status</a></div>
+    <div><div class="micro">Company</div><a href="#">About</a><a href="#">Customers</a><a href="#">Careers</a><a href="#">Contact</a></div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
