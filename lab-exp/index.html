@@ -7,7 +7,7 @@
   <meta name="description" content="Browse selected properties and talk to an advisor on WhatsApp." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400&family=Manrope:wght@400;500;600&family=Noto+Sans+JP:wght@400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400&family=Manrope:wght@400;500;600&family=Noto+Sans+JP:wght@400&family=Noto+Sans+Arabic:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="bg" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -18,8 +18,11 @@
     <button class="toggle -mm -up" id="toggle"><span class="-active" data-mode="list">List</span><span>/</span><span data-mode="grid">Grid</span></button>
     <span class="mark -mm -up -jp" aria-hidden="true">エクス</span>
     <button class="about -mm -up" id="aboutBtn">About</button>
-    <a class="talk -mm -up" href="mailto:hello@example.com">Let's talk</a>
+    <button class="talk -mm -up" id="talkBtn">Let's talk</button>
+    <button class="lang -mm -up" id="lang" aria-label="Switch language">AR</button>
   </header>
+
+  <nav class="filters -mm -up" id="filters" aria-label="Filter by country"><button class="-active" data-f="all">All</button><button data-f="eg">Egypt</button><button data-f="sa">Saudi Arabia</button><button data-f="ae">UAE</button></nav>
 
   <div class="title -lrg" id="title" aria-live="polite">NILE.LAB</div>
   <span class="progress" id="progress"></span>
@@ -39,6 +42,12 @@
     <p id="pText"></p>
     <dl class="facts -mm -up" id="pFacts"></dl>
     <a class="cta" id="pCta" target="_blank" rel="noopener">Ask on WhatsApp</a>
+    <form class="lead" id="lead" hidden>
+      <input id="fName" name="name" autocomplete="name" required />
+      <input id="fPhone" name="phone" type="tel" autocomplete="tel" required />
+      <textarea id="fWant" name="want" rows="3" required></textarea>
+      <button class="cta" type="submit" id="fSend">Send on WhatsApp</button>
+    </form>
     <small class="-mm -up" id="pMeta"></small>
   </aside>
 

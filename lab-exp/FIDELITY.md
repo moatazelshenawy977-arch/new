@@ -43,3 +43,12 @@ npm run build    # production build in dist/
 - `src/cards.js` holds 8 SAMPLE listings (made-up names, prices and details). Replace with real inventory before launch.
 - `src/brand.js` has the WhatsApp number (`whatsapp`, international format) and email. Both are placeholders.
 - Listing photos are Unsplash images and may not match the listed property. Use your own photos for real listings.
+
+## Features added in the final pass
+- Country filter (All / Egypt / Saudi Arabia / UAE) that reshapes both the carousel and the grid.
+- English / Arabic switch (UI, listing text, WhatsApp messages, cookie notice). Remembers the visitor's choice.
+- "Let's talk" form: name, phone and what they need, sent as a WhatsApp message to your number in `src/brand.js`. There is no server; nothing is stored.
+- Sample prices were calibrated to public 2026 market averages (Global Property Guide, Tranio, Engel & Voelkers). They are still demo values, not offers.
+
+## Publish
+`npm run build` creates `dist/`. Upload that folder to any static host (Netlify, Vercel, GitHub Pages, Cloudflare Pages). No server is needed.

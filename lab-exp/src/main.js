@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { CARDS } from './cards.js';
 import { BRAND } from './brand.js';
+import { STR } from './i18n.js';
 
 const $ = (s) => document.querySelector(s);
 const root = document.documentElement;
@@ -137,6 +138,20 @@ const bar3 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.62), crossMat);
 cube.add(glass, edge, bar1, bar2, bar3);
 scene.add(cube);
 
+/* ---------- language + country filter ---------- */
+let lang = 'en', filter = 'all';
+try { lang = localStorage.getItem('nile-lang') || ((navigator.language || '').startsWith('ar') ? 'ar' : 'en'); } catch {}
+const T = (k) => STR[lang][k];
+const L = (i) => (lang === 'ar' ? { ...CARDS[i], ...CARDS[i].ar } : CARDS[i]);
+let vis = items.slice(); // cards that pass the current filter, in order
+items.forEach((it) => { it.on = 1; it.vi = 0; });
+function applyFilter() {
+  vis = items.filter((it) => filter === 'all' || it.card.country === filter);
+  items.forEach((it) => { it.on = vis.includes(it) ? 1 : 0; });
+  vis.forEach((it, k) => { it.vi = k; });
+  target = pos = 0; closePanel();
+}
+
 /* ---------- layout (list = curved carousel, grid = compact grid) ---------- */
 let mode = 'list';
 let gridMix = 0; // 0 = carousel, 1 = grid; every card blends by this one value
@@ -150,7 +165,7 @@ function layout() {
   items.forEach((it) => { it.w = CW; it.h = CH; it.u.uRes.value.set(CW, CH); it.mesh.scale.set(CW, CH, 1); });
 }
 const STEP = () => CW + GAP;
-const TOTAL = () => STEP() * items.length;
+const TOTAL = () => STEP() * Math.max(1, vis.length);
 
 /* ---------- scroll physics (wheel + drag + touch, with inertia) ---------- */
 let target = 0, pos = 0, vel = 0, dragging = false, lastX = 0, activeIdx = 0, moved = 0;
@@ -178,7 +193,7 @@ const pointer = new THREE.Vector2(9, 9);
 let hovered = -1;
 function hit() {
   ray.setFromCamera(pointer, camera);
-  const h = ray.intersectObjects(group.children)[0];
+  const h = ray.intersectObjects(vis.map((it) => it.mesh))[0];
   return h ? h.object.userData.i : -1;
 }
 function pick() {
@@ -188,27 +203,70 @@ function pick() {
 
 /* ---------- panel ---------- */
 let panelOpen = false;
+function showPanel() { $('#panel').classList.add('-open'); $('#panel').setAttribute('aria-hidden', 'false'); panelOpen = true; }
 function openPanel(i) {
-  const c = CARDS[i];
+  const c = L(i);
+  $('#lead').hidden = true;
   $('#pTitle').textContent = c.title;
   $('#pText').textContent = c.text;
-  const facts = [['Price', c.price], ['Type', c.type], ['Size', c.size], ['Beds / baths', c.beds === 0 ? `Studio / ${c.baths}` : `${c.beds} / ${c.baths}`]];
+  const facts = [[T('price'), c.price], [T('type'), c.type], [T('size'), c.size], [T('bb'), c.beds === 0 ? `${T('studio')} / ${c.baths}` : `${c.beds} / ${c.baths}`]];
   const dl = $('#pFacts'); dl.replaceChildren();
   facts.forEach(([k, v]) => { const d = document.createElement('div'); const dt = document.createElement('dt'); const dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; d.append(dt, dd); dl.appendChild(d); });
-  const msg = `Hello, I'm interested in "${c.title}" (${c.tag}, ${c.price}). Is it still available?`;
-  const cta = $('#pCta'); cta.hidden = false; cta.href = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(msg)}`;
-  $('#pMeta').textContent = `${String(i + 1).padStart(2, '0')} / ${String(CARDS.length).padStart(2, '0')} — ${c.tag} — sample listing`;
-  $('#panel').classList.add('-open'); $('#panel').setAttribute('aria-hidden', 'false');
-  panelOpen = true;
+  const cta = $('#pCta'); cta.hidden = false; cta.textContent = T('cta');
+  cta.href = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(STR[lang].hello(c.title, c.tag, c.price))}`;
+  $('#pMeta').textContent = `${String(i + 1).padStart(2, '0')} / ${String(CARDS.length).padStart(2, '0')} — ${c.tag} — ${T('sample')}`;
+  panelState = { kind: 'property', i };
+  showPanel();
 }
-function closePanel() { $('#panel').classList.remove('-open'); $('#panel').setAttribute('aria-hidden', 'true'); panelOpen = false; }
+let panelState = null;
+function closePanel() { $('#panel').classList.remove('-open'); $('#panel').setAttribute('aria-hidden', 'true'); panelOpen = false; panelState = null; }
 $('#close').addEventListener('click', closePanel);
-$('#aboutBtn').addEventListener('click', () => {
-  $('#pTitle').textContent = 'About';
-  $('#pText').textContent = BRAND.about; $('#pFacts').replaceChildren(); $('#pCta').hidden = true;
+function openAbout() {
+  $('#lead').hidden = true; $('#pCta').hidden = true; $('#pFacts').replaceChildren();
+  $('#pTitle').textContent = T('noAbout');
+  $('#pText').textContent = lang === 'ar' ? BRAND.aboutAr : BRAND.about;
   $('#pMeta').textContent = `${BRAND.name} — ${BRAND.year}`;
-  $('#panel').classList.add('-open'); panelOpen = true;
+  panelState = { kind: 'about' }; showPanel();
+}
+function openContact() {
+  $('#pCta').hidden = true; $('#pFacts').replaceChildren();
+  $('#pTitle').textContent = T('cTitle'); $('#pText').textContent = T('cText'); $('#pMeta').textContent = BRAND.name;
+  $('#fName').placeholder = T('cName'); $('#fPhone').placeholder = T('cPhone'); $('#fWant').placeholder = T('cWant'); $('#fSend').textContent = T('cSend');
+  $('#lead').hidden = false;
+  panelState = { kind: 'contact' }; showPanel();
+}
+$('#aboutBtn').addEventListener('click', openAbout);
+$('#talkBtn').addEventListener('click', openContact);
+$('#lead').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const n = $('#fName').value.trim(), ph = $('#fPhone').value.trim(), w = $('#fWant').value.trim();
+  if (!n || !ph || !w) return;
+  open(`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(STR[lang].cMsg(n, ph, w))}`, '_blank', 'noopener');
+  e.target.reset(); closePanel();
 });
+
+/* ---------- filters ---------- */
+$('#filters').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  filter = b.dataset.f;
+  document.querySelectorAll('#filters button').forEach((x) => x.classList.toggle('-active', x === b));
+  applyFilter();
+});
+
+/* ---------- language ---------- */
+function applyLang() {
+  root.lang = lang;
+  $('#lang').textContent = lang === 'ar' ? 'EN' : 'AR';
+  const [l, g] = document.querySelectorAll('#toggle span[data-mode]'); l.textContent = T('list'); g.textContent = T('grid');
+  $('#aboutBtn').textContent = T('about'); $('#talkBtn').textContent = T('talk'); $('.hub').textContent = T('hub'); $('#close').textContent = T('close');
+  document.querySelectorAll('#filters button').forEach((b) => { b.textContent = T(b.dataset.f); });
+  const ck = $('#cookie'); if (ck) { ck.querySelector('b').textContent = T('cookieT'); ck.querySelector('p').textContent = T('cookieP'); const bs = ck.querySelectorAll('button'); bs[0].textContent = T('accept'); bs[1].textContent = T('reject'); }
+  document.querySelector('meta[name="description"]').content = lang === 'ar' ? BRAND.descriptionAr : BRAND.description;
+  document.title = `${BRAND.name} — ${lang === 'ar' ? BRAND.taglineAr : BRAND.tagline}`;
+  activeIdx = -1;
+  if (panelState?.kind === 'property') openPanel(panelState.i); else if (panelState?.kind === 'about') openAbout(); else if (panelState?.kind === 'contact') openContact();
+}
+$('#lang').addEventListener('click', () => { lang = lang === 'en' ? 'ar' : 'en'; try { localStorage.setItem('nile-lang', lang); } catch {} applyLang(); });
 
 /* ---------- list / grid toggle ---------- */
 $('#toggle').addEventListener('click', () => {
@@ -238,12 +296,10 @@ cookie.querySelectorAll('[data-c]').forEach((b) => b.addEventListener('click', (
 }));
 
 /* ---------- brand text ---------- */
-document.title = `${BRAND.name} — ${BRAND.tagline}`;
-document.querySelector('meta[name="description"]').content = BRAND.description;
 $('.logo').textContent = BRAND.name; $('#title').textContent = CARDS[0].title;
-$('.mark').textContent = BRAND.jp; $('.hub').textContent = BRAND.hubLabel;
-$('.year').textContent = `©${BRAND.year}`; $('.talk').href = `mailto:${BRAND.email}`;
-$('#aboutBtn').setAttribute('aria-label', `About ${BRAND.name}`);
+$('.mark').textContent = BRAND.jp;
+$('.year').textContent = `©${BRAND.year}`;
+applyLang();
 
 /* ---------- render loop ---------- */
 const titleEl = $('#title'), progressEl = $('#progress');
@@ -262,19 +318,20 @@ function frame() {
   vel = lerp(vel, pos - prev, 0.2);
   const v = clamp(vel / 40, -1.5, 1.5);
 
-  const step = STEP(), total = TOTAL();
+  const step = STEP(), total = TOTAL(), n = vis.length;
   hovered = dragging || panelOpen ? hovered : hit();
   canvas.classList.toggle('-hover', hovered >= 0 && !dragging);
 
   gridMix = lerp(gridMix, mode === 'grid' ? 1 : 0, reduced ? 1 : 0.09);
   const small = W < 700;
-  const cols = small ? 2 : 4, rows = Math.ceil(items.length / cols);
+  const cols = small ? 2 : Math.min(4, Math.max(1, n)), rows = Math.max(1, Math.ceil(n / cols));
   // scale the grid so all rows fit the viewport under the header and title
   const gridS = Math.min(((small ? H * 0.5 : H * 0.58) - GAP * (rows - 1)) / (rows * CH), (W * 0.9 - GAP * (cols - 1)) / (cols * CW), 0.62);
   const gw = CW * gridS + GAP * 0.6, gh = CH * gridS + GAP * 0.6;
 
   let nearest = 0, nearestD = 1e9;
-  items.forEach((it, i) => {
+  items.forEach((it) => {
+    const i = it.vi;
     let lx = i * step - pos;
     lx = ((((lx + total / 2) % total) + total) % total) - total / 2;
     const gx = ((i % cols) - (cols - 1) / 2) * gw;
@@ -290,12 +347,14 @@ function frame() {
     it.u.uVel.value = v * (1 - gridMix);
     it.u.uBend.value = 1 - gridMix;
     it.u.uTime.value = t;
-    it.u.uAlpha.value = lerp(it.u.uAlpha.value, entered, 0.1);
-    const d = Math.abs(lx);
-    if (d < nearestD) { nearestD = d; nearest = i; }
+    it.on = vis.includes(it) ? 1 : 0;
+    it.u.uAlpha.value = lerp(it.u.uAlpha.value, entered * it.on, 0.12);
+    it.mesh.visible = it.u.uAlpha.value > 0.01;
+    const d = it.on ? Math.abs(lx) : 1e9;
+    if (d < nearestD) { nearestD = d; nearest = it.mesh.userData.i; }
   });
   const shown = hovered >= 0 ? hovered : nearest;
-  if (shown !== activeIdx) { activeIdx = shown; titleEl.textContent = CARDS[shown].title; }
+  if (shown !== activeIdx) { activeIdx = shown; titleEl.textContent = L(shown).title; }
   progressEl.style.setProperty('--p', String((((pos / total) % 1) + 1) % 1));
 
   cube.rotation.x = t * 0.5; cube.rotation.y = t * 0.7 + v * 2;
