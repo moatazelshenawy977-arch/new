@@ -265,7 +265,8 @@ function applyLang() {
   $('#aboutBtn').textContent = T('about'); $('#talkBtn').textContent = T('talk'); $('.hub').textContent = T('hub'); $('#close').textContent = T('close');
   document.querySelectorAll('#filters button').forEach((b) => { b.textContent = T(b.dataset.f); });
   const ck = $('#cookie'); if (ck) { ck.querySelector('b').textContent = T('cookieT'); ck.querySelector('p').textContent = T('cookieP'); const bs = ck.querySelectorAll('button'); bs[0].textContent = T('accept'); bs[1].textContent = T('reject'); }
-  document.querySelector('meta[name="description"]').content = lang === 'ar' ? BRAND.descriptionAr : BRAND.description;
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) metaDesc.content = lang === 'ar' ? BRAND.descriptionAr : BRAND.description;
   document.title = `${BRAND.name} — ${lang === 'ar' ? BRAND.taglineAr : BRAND.tagline}`;
   activeIdx = -1;
   if (panelState?.kind === 'property') openPanel(panelState.i); else if (panelState?.kind === 'about') openAbout(); else if (panelState?.kind === 'contact') openContact();
