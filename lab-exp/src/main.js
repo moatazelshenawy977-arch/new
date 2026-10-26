@@ -2,6 +2,7 @@ import './style.css';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { CARDS } from './cards.js';
+import { BRAND } from './brand.js';
 
 const $ = (s) => document.querySelector(s);
 const root = document.documentElement;
@@ -138,13 +139,14 @@ scene.add(cube);
 
 /* ---------- layout (list = curved carousel, grid = compact grid) ---------- */
 let mode = 'list';
+let gridMix = 0; // 0 = carousel, 1 = grid; every card blends by this one value
 let GAP = 40, CW = 300, CH = 420;
 function layout() {
   CH = clamp(H * 0.42, 240, 520);
   CW = CH * CARD_W_RATIO;
   GAP = clamp(W * 0.022, 16, 48);
-  cube.scale.setScalar(clamp(H * 0.09, 56, 96));
-  cube.position.set(0, -H * 0.3, 40);
+  cube.scale.setScalar(clamp(H * (W < 700 ? 0.06 : 0.09), 44, 96));
+  cube.position.set(W < 700 ? W * 0.3 : 0, W < 700 ? -H * 0.36 : -H * 0.3, 40);
   items.forEach((it) => { it.w = CW; it.h = CH; it.u.uRes.value.set(CW, CH); it.mesh.scale.set(CW, CH, 1); });
 }
 const STEP = () => CW + GAP;
@@ -198,8 +200,8 @@ function closePanel() { $('#panel').classList.remove('-open'); $('#panel').setAt
 $('#close').addEventListener('click', closePanel);
 $('#aboutBtn').addEventListener('click', () => {
   $('#pTitle').textContent = 'About';
-  $('#pText').textContent = 'A small lab for experiments in code and design. Replace this text with your own story.';
-  $('#pMeta').textContent = 'LAB.EXP — 2026';
+  $('#pText').textContent = BRAND.about;
+  $('#pMeta').textContent = `${BRAND.name} — ${BRAND.year}`;
   $('#panel').classList.add('-open'); panelOpen = true;
 });
 
@@ -224,11 +226,19 @@ $('#sfx').addEventListener('click', (e) => e.currentTarget.setAttribute('aria-pr
 
 /* ---------- cookie banner ---------- */
 const cookie = $('#cookie');
-try { if (localStorage.getItem('lab-cookie')) cookie.remove(); } catch {}
+try { if (localStorage.getItem('nile-cookie')) cookie.remove(); } catch {}
 cookie.querySelectorAll('[data-c]').forEach((b) => b.addEventListener('click', () => {
-  try { localStorage.setItem('lab-cookie', b.textContent); } catch {}
+  try { localStorage.setItem('nile-cookie', b.textContent); } catch {}
   cookie.classList.add('-leave'); setTimeout(() => cookie.remove(), 200);
 }));
+
+/* ---------- brand text ---------- */
+document.title = `${BRAND.name} — ${BRAND.tagline}`;
+document.querySelector('meta[name="description"]').content = BRAND.description;
+$('.logo').textContent = BRAND.name; $('#title').textContent = CARDS[0].title;
+$('.mark').textContent = BRAND.jp; $('.hub').textContent = BRAND.hubLabel;
+$('.year').textContent = `©${BRAND.year}`; $('.talk').href = `mailto:${BRAND.email}`;
+$('#aboutBtn').setAttribute('aria-label', `About ${BRAND.name}`);
 
 /* ---------- render loop ---------- */
 const titleEl = $('#title'), progressEl = $('#progress');
@@ -251,30 +261,32 @@ function frame() {
   hovered = dragging || panelOpen ? hovered : hit();
   canvas.classList.toggle('-hover', hovered >= 0 && !dragging);
 
+  gridMix = lerp(gridMix, mode === 'grid' ? 1 : 0, reduced ? 1 : 0.09);
+  const small = W < 700;
+  const cols = small ? 2 : 4, rows = Math.ceil(items.length / cols);
+  // scale the grid so all rows fit the viewport under the header and title
+  const gridS = Math.min(((small ? H * 0.5 : H * 0.58) - GAP * (rows - 1)) / (rows * CH), (W * 0.9 - GAP * (cols - 1)) / (cols * CW), 0.62);
+  const gw = CW * gridS + GAP * 0.6, gh = CH * gridS + GAP * 0.6;
+
   let nearest = 0, nearestD = 1e9;
   items.forEach((it, i) => {
-    if (mode === 'list') {
-      let x = i * step - pos;
-      x = ((((x + total / 2) % total) + total) % total) - total / 2;
-      it.tx = x; it.ty = 0;
-    } else {
-      const cols = W < 700 ? 2 : 4, rows = Math.ceil(items.length / cols);
-      const s = W < 700 ? 0.42 : 0.5, gw = (CW * s + GAP * 0.6);
-      it.tx = ((i % cols) - (cols - 1) / 2) * gw; it.ty = (((rows - 1) / 2) - Math.floor(i / cols)) * (CH * s + GAP * 0.6);
-    }
-    it.x = lerp(it.x, it.tx, mode === 'grid' ? 0.1 : 1);
-    it.y = lerp(it.y, it.ty, 0.1);
-    const sc = mode === "grid" ? (W < 700 ? 0.42 : 0.5) : 1;
+    let lx = i * step - pos;
+    lx = ((((lx + total / 2) % total) + total) % total) - total / 2;
+    const gx = ((i % cols) - (cols - 1) / 2) * gw;
+    const gy = (((rows - 1) / 2) - Math.floor(i / cols)) * gh + (small ? H * 0.06 : H * 0.02);
+    it.x = lerp(lx, gx, gridMix);
+    it.y = lerp(0, gy, gridMix);
+    const sc = lerp(1, gridS, gridMix);
     it.mesh.scale.set(CW * sc, CH * sc, 1);
     it.mesh.position.set(it.x, it.y + (1 - entered) * -H * 0.3, 0);
-    it.mesh.rotation.y = mode === 'list' ? clamp(-it.x / 3200, -0.4, 0.4) : 0;
+    it.mesh.rotation.y = clamp(-it.x / 3200, -0.4, 0.4) * (1 - gridMix);
     it.hover = lerp(it.hover, hovered === i ? 1 : 0, 0.12);
     it.u.uHover.value = it.hover;
-    it.u.uVel.value = v;
-    it.u.uBend.value = mode === 'list' ? 1 : 0;
+    it.u.uVel.value = v * (1 - gridMix);
+    it.u.uBend.value = 1 - gridMix;
     it.u.uTime.value = t;
     it.u.uAlpha.value = lerp(it.u.uAlpha.value, entered, 0.1);
-    const d = Math.abs(it.tx);
+    const d = Math.abs(lx);
     if (d < nearestD) { nearestD = d; nearest = i; }
   });
   const shown = hovered >= 0 ? hovered : nearest;

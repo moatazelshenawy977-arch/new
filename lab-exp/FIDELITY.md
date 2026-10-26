@@ -1,6 +1,6 @@
-# LAB.EXP: fidelity notes
+# NILE.LAB: fidelity notes
 
-**Mode:** Reference. The design system and experience of https://exp.fiddle.digital/ are rebuilt with a placeholder brand (LAB.EXP). No original text, logo, fonts, images or 3D assets are used.
+**Mode:** Reference. The design system and experience of https://exp.fiddle.digital/ are rebuilt with a placeholder brand (NILE.LAB, AI and automation for real estate and sales). No original text, logo, fonts, images or 3D assets are used.
 
 ## How to run
 ```
@@ -22,7 +22,7 @@ npm run build    # production build in dist/
 - Card shader: bend, velocity skew, RGB split and glitch bands are tuned by eye. The original uses its own glitch shaders.
 - Background gradient is four blurred colour blobs, matched by eye to one screenshot.
 - Scroll feel (inertia 0.085, wheel x1.1, drag x1.4) is a guess.
-- Grid layout and the detail panel are simplified.
+- The detail panel is simplified. The grid view (4x2 desktop, 2x4 phone) blends smoothly with the carousel but is my own design, not copied from the original.
 
 ## Not available from outside
 - Licensed fonts (KH Teka, KH Teka Mono): replaced with Space Grotesk, JetBrains Mono (open licence).
@@ -35,6 +35,6 @@ npm run build    # production build in dist/
 - Analytics and tracking from the original are not included.
 
 ## To do before launch
-- Replace LAB.EXP, texts, email link and the card content with your own.
+- Rename the brand, email and about text in `src/brand.js`; edit the 8 service cards in `src/cards.js`.
 - Host fonts and images yourself for speed and privacy.
 - Test on a mid-range phone; the 3D pixel ratio is already capped at 2.
