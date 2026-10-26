@@ -241,8 +241,12 @@ $('#lead').addEventListener('submit', (e) => {
   e.preventDefault();
   const n = $('#fName').value.trim(), ph = $('#fPhone').value.trim(), w = $('#fWant').value.trim();
   if (!n || !ph || !w) return;
-  open(`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(STR[lang].cMsg(n, ph, w))}`, '_blank', 'noopener');
-  e.target.reset(); closePanel();
+  // show a real link instead of window.open, which pop-up blockers and embedded views refuse
+  const cta = $('#pCta');
+  cta.href = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(STR[lang].cMsg(n, ph, w))}`;
+  cta.textContent = T('cSend'); cta.hidden = false;
+  e.target.reset(); $('#lead').hidden = true;
+  $('#pText').textContent = T('cReady');
 });
 
 /* ---------- filters ---------- */
