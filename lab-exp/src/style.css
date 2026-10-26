@@ -96,3 +96,10 @@ a { color: inherit; text-decoration: none; }
   .title { left: var(--g-margin); bottom: 4.6rem; font-size: 1.6rem; }
   .progress { left: var(--g-margin); bottom: 3.9rem; }
 }
+
+.panel .facts { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem 1rem; margin: 0 0 1.1rem; }
+.panel .facts div { display: flex; flex-direction: column; gap: .3rem; }
+.panel .facts dt { color: var(--c-purple); } .panel .facts dd { margin: 0; color: var(--c-white); font-size: .85rem; }
+.panel .cta { display: block; margin: 0 0 1rem; padding: .8rem; text-align: center; background: var(--c-white); color: var(--c-black); border-radius: .3rem; font-weight: 500; }
+.panel .cta:hover { background: var(--c-yellow); }
+.panel .cta[hidden] { display: none; }

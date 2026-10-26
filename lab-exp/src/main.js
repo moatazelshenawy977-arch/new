@@ -192,7 +192,12 @@ function openPanel(i) {
   const c = CARDS[i];
   $('#pTitle').textContent = c.title;
   $('#pText').textContent = c.text;
-  $('#pMeta').textContent = `${String(i + 1).padStart(2, '0')} / ${String(CARDS.length).padStart(2, '0')} — ${c.tag}`;
+  const facts = [['Price', c.price], ['Type', c.type], ['Size', c.size], ['Beds / baths', c.beds === 0 ? `Studio / ${c.baths}` : `${c.beds} / ${c.baths}`]];
+  const dl = $('#pFacts'); dl.replaceChildren();
+  facts.forEach(([k, v]) => { const d = document.createElement('div'); const dt = document.createElement('dt'); const dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; d.append(dt, dd); dl.appendChild(d); });
+  const msg = `Hello, I'm interested in "${c.title}" (${c.tag}, ${c.price}). Is it still available?`;
+  const cta = $('#pCta'); cta.hidden = false; cta.href = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(msg)}`;
+  $('#pMeta').textContent = `${String(i + 1).padStart(2, '0')} / ${String(CARDS.length).padStart(2, '0')} — ${c.tag} — sample listing`;
   $('#panel').classList.add('-open'); $('#panel').setAttribute('aria-hidden', 'false');
   panelOpen = true;
 }
@@ -200,7 +205,7 @@ function closePanel() { $('#panel').classList.remove('-open'); $('#panel').setAt
 $('#close').addEventListener('click', closePanel);
 $('#aboutBtn').addEventListener('click', () => {
   $('#pTitle').textContent = 'About';
-  $('#pText').textContent = BRAND.about;
+  $('#pText').textContent = BRAND.about; $('#pFacts').replaceChildren(); $('#pCta').hidden = true;
   $('#pMeta').textContent = `${BRAND.name} — ${BRAND.year}`;
   $('#panel').classList.add('-open'); panelOpen = true;
 });

@@ -2,11 +2,12 @@
 export const BRAND = {
   name: 'NILE.LAB',
   short: 'NILE',
-  tagline: 'AI & automation for real estate and sales teams.',
-  description: 'We build AI sales assistants, WhatsApp automation and property tools that turn leads into closed deals, for teams in Egypt, Saudi Arabia and the UAE.',
+  tagline: 'Find your next property in Egypt and the Gulf.',
+  description: 'Browse selected properties in Egypt, Saudi Arabia and the UAE, and talk to an advisor on WhatsApp.',
   email: 'hello@example.com', // replace with your real address
+  whatsapp: '201000000000', // international format, no + or spaces; replace with your number
   year: 2026,
-  hubLabel: 'Solutions Hub',
+  hubLabel: 'Properties',
   jp: 'ナイル', // decorative katakana under the logo, can be removed
-  about: 'NILE.LAB builds practical AI systems for real estate and sales teams: assistants that answer leads in seconds, automations that never forget a follow-up, and dashboards that show what is really working.',
+  about: 'NILE.LAB is a property showcase for Egypt and the Gulf. Pick a property, send an inquiry on WhatsApp, and an advisor replies fast. Listings shown here are samples.',
 };

@@ -38,3 +38,8 @@ npm run build    # production build in dist/
 - Rename the brand, email and about text in `src/brand.js`; edit the 8 service cards in `src/cards.js`.
 - Host fonts and images yourself for speed and privacy.
 - Test on a mid-range phone; the 3D pixel ratio is already capped at 2.
+
+## Property listings
+- `src/cards.js` holds 8 SAMPLE listings (made-up names, prices and details). Replace with real inventory before launch.
+- `src/brand.js` has the WhatsApp number (`whatsapp`, international format) and email. Both are placeholders.
+- Listing photos are Unsplash images and may not match the listed property. Use your own photos for real listings.
