@@ -1,0 +1,40 @@
+# LAB.EXP: fidelity notes
+
+**Mode:** Reference. The design system and experience of https://exp.fiddle.digital/ are rebuilt with a placeholder brand (LAB.EXP). No original text, logo, fonts, images or 3D assets are used.
+
+## How to run
+```
+npm install
+npm run dev      # development
+npm run build    # production build in dist/
+```
+
+## Matches (taken from the page's HTML and CSS)
+- Colour tokens: black #101214, red #ff4f36, green #0f7f69, yellow #f4ff1e, blue #3687ff, berry #c8c2cf, grey #e6dfe4.
+- Type scale ratio 1.333, base 1rem, tight negative letter-spacing, mono UI labels in uppercase.
+- Easings: cubic(.22,.31,0,1), cubic-in(.69,0,0,1), smooth(.5,0,.3,1).
+- 14-column grid on desktop, 6 on mobile; fixed header and footer labels; vertical progress line.
+- Splash: 10x10 black grid that dissolves in random order.
+- Footer colour themes (Black, Red, Green, Yellow, Blue) recolour all UI and the cube.
+- List / Grid toggle; cookie dialog (light theme, 540px max).
+
+## Approximated (observed, not measured live)
+- Card shader: bend, velocity skew, RGB split and glitch bands are tuned by eye. The original uses its own glitch shaders.
+- Background gradient is four blurred colour blobs, matched by eye to one screenshot.
+- Scroll feel (inertia 0.085, wheel x1.1, drag x1.4) is a guess.
+- Grid layout and the detail panel are simplified.
+
+## Not available from outside
+- Licensed fonts (KH Teka, KH Teka Mono): replaced with Space Grotesk, JetBrains Mono (open licence).
+- Original media, 3D models, sound effects (the sfx toggle is visual only), exact shader source.
+- The original home page loads its cards at runtime. A live capture (hover states, scroll timelines, network list) was not possible because the sandbox blocked the host, so motion values above are estimates.
+
+## Assets and licences
+- Card photos: Unsplash (Unsplash License, free for commercial use). Linked directly from images.unsplash.com; see `src/cards.js`. Replace with your own images before launch if you want full control.
+- Fonts via Google Fonts: Space Grotesk, JetBrains Mono, Manrope, Noto Sans JP (SIL OFL).
+- Analytics and tracking from the original are not included.
+
+## To do before launch
+- Replace LAB.EXP, texts, email link and the card content with your own.
+- Host fonts and images yourself for speed and privacy.
+- Test on a mid-range phone; the 3D pixel ratio is already capped at 2.
